@@ -33,20 +33,20 @@ import com.onelabs.oneplayer.ui.components.FullscreenPlayer
 import com.onelabs.oneplayer.ui.screens.*
 import com.onelabs.oneplayer.ui.theme.*
 
-enum class NavTab(val label: String, val icon: ImageVector) {
-    LIVE_TV("Live TV", Icons.Default.Tv),
+enum class OneNavTab(val label: String, val icon: ImageVector) {
+    HOME("Home", Icons.Default.Home),
+    LIVE_TV("Live TV", Icons.Default.LiveTv),
     MOVIES("Movies", Icons.Default.Movie),
-    SERIES("Series", Icons.Default.VideoLibrary),
     PLAYLISTS("Playlists", Icons.Default.PlaylistPlay),
-    PAIRING("Pairing", Icons.Default.Devices),
-    DIAGNOSTICS("Tools", Icons.Default.Speed)
+    MY_ACCOUNT("My ONE", Icons.Default.Person)
 }
 
 data class ActivePlayback(
     val url: String,
     val title: String,
     val category: String,
-    val isLive: Boolean
+    val isLive: Boolean,
+    val poster: String = ""
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -55,12 +55,13 @@ fun MainScreen(
     repository: PlaylistRepository,
     licenseManager: LicenseManager
 ) {
-    var currentTab by remember { mutableStateOf(NavTab.LIVE_TV) }
+    var currentTab by remember { mutableStateOf(OneNavTab.HOME) }
     var activePlayback by remember { mutableStateOf<ActivePlayback?>(null) }
     var showProfilesDialog by remember { mutableStateOf(false) }
 
     val licenseStatus by licenseManager.licenseStatus.collectAsState()
     val activeProfile by repository.activeProfile.collectAsState()
+    val activeUserAgent by repository.userAgentManager.currentUserAgent.collectAsState()
 
     // Handle back button when player is active
     BackHandler(enabled = activePlayback != null) {
@@ -73,64 +74,59 @@ fun MainScreen(
                 TopAppBar(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            // ONE Brand App Icon
                             Image(
                                 painter = painterResource(id = R.drawable.ic_launcher_fg_img),
                                 contentDescription = "ONE Player",
                                 modifier = Modifier
-                                    .size(36.dp)
+                                    .size(34.dp)
                                     .clip(RoundedCornerShape(8.dp)),
                                 contentScale = ContentScale.Crop
                             )
                             Spacer(modifier = Modifier.width(10.dp))
-                            Column {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text(
-                                        "ONE™",
-                                        color = NeonCyan,
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.ExtraBold
-                                    )
-                                    Spacer(modifier = Modifier.width(4.dp))
-                                    Text(
-                                        "Player",
-                                        color = Color.White,
-                                        fontSize = 18.sp,
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                }
+                            Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    "IPTV & Media3 Multi-Format",
-                                    color = TextMuted,
-                                    fontSize = 10.sp
+                                    "ONE",
+                                    color = OneRed,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Black,
+                                    letterSpacing = 1.sp
+                                )
+                                Spacer(modifier = Modifier.width(4.dp))
+                                Text(
+                                    "PLAYER",
+                                    color = Color.White,
+                                    fontSize = 17.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    letterSpacing = 0.5.sp
                                 )
                             }
                         }
                     },
                     actions = {
-                        // Pairing status pill
+                        // Quick 31d trial pill
                         Surface(
-                            shape = RoundedCornerShape(16.dp),
-                            color = DarkSurfaceVariant,
+                            shape = RoundedCornerShape(14.dp),
+                            color = OneCardSurface,
                             modifier = Modifier
-                                .clickable { currentTab = NavTab.PAIRING }
+                                .clickable { currentTab = OneNavTab.MY_ACCOUNT }
                                 .padding(end = 8.dp)
-                                .testTag("topbar_pairing_status")
                         ) {
                             Row(
-                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                                modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Box(
                                     modifier = Modifier
                                         .size(7.dp)
-                                        .background(if (licenseStatus.isTrialActive) NeonLime else DangerRed, CircleShape)
+                                        .background(if (licenseStatus.isTrialActive) OneGreen else OneRed, CircleShape)
                                 )
                                 Spacer(modifier = Modifier.width(6.dp))
                                 Text(
                                     "${licenseStatus.daysRemaining}d Trial",
                                     color = Color.White,
                                     fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = FontWeight.Bold
                                 )
                             }
                         }
@@ -138,19 +134,18 @@ fun MainScreen(
                         // Profile Avatar
                         IconButton(
                             onClick = { showProfilesDialog = true },
-                            modifier = Modifier
-                                .testTag("topbar_profile_button")
-                                .padding(end = 6.dp)
+                            modifier = Modifier.padding(end = 6.dp)
                         ) {
                             Box(
                                 modifier = Modifier
-                                    .size(32.dp)
-                                    .background(NeonCyan, CircleShape),
+                                    .size(30.dp)
+                                    .clip(RoundedCornerShape(4.dp))
+                                    .background(OneRed),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     activeProfile?.name?.take(1) ?: "U",
-                                    color = DarkBackground,
+                                    color = Color.White,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 14.sp
                                 )
@@ -158,7 +153,7 @@ fun MainScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = DarkBackground
+                        containerColor = OneBlack
                     )
                 )
             }
@@ -166,10 +161,10 @@ fun MainScreen(
         bottomBar = {
             if (activePlayback == null) {
                 NavigationBar(
-                    containerColor = DarkSurface,
+                    containerColor = OneDarkSurface,
                     contentColor = Color.White
                 ) {
-                    NavTab.values().forEach { tab ->
+                    OneNavTab.values().forEach { tab ->
                         val selected = currentTab == tab
                         NavigationBarItem(
                             selected = selected,
@@ -178,19 +173,19 @@ fun MainScreen(
                                 Icon(
                                     tab.icon,
                                     contentDescription = tab.label,
-                                    tint = if (selected) NeonCyan else TextSecondary
+                                    tint = if (selected) Color.White else TextGrayDark
                                 )
                             },
                             label = {
                                 Text(
                                     tab.label,
-                                    color = if (selected) NeonCyan else TextSecondary,
-                                    fontSize = 11.sp,
+                                    color = if (selected) Color.White else TextGrayDark,
+                                    fontSize = 10.sp,
                                     fontWeight = if (selected) FontWeight.Bold else FontWeight.Normal
                                 )
                             },
                             colors = NavigationBarItemDefaults.colors(
-                                indicatorColor = DarkSurfaceVariant
+                                indicatorColor = OneSurfaceVariant
                             ),
                             modifier = Modifier.testTag("nav_tab_${tab.name.lowercase()}")
                         )
@@ -198,7 +193,7 @@ fun MainScreen(
                 }
             }
         },
-        containerColor = DarkBackground
+        containerColor = OneBlack
     ) { innerPadding ->
         Box(
             modifier = Modifier
@@ -206,56 +201,93 @@ fun MainScreen(
                 .padding(innerPadding)
         ) {
             when (currentTab) {
-                NavTab.LIVE_TV -> LiveTvScreen(
+                OneNavTab.HOME -> HomeScreen(
                     repository = repository,
                     onPlayChannel = { ch: Channel ->
                         activePlayback = ActivePlayback(
                             url = ch.streamUrl,
                             title = ch.name,
                             category = ch.category,
-                            isLive = true
+                            isLive = true,
+                            poster = ch.logo
+                        )
+                    },
+                    onPlayVod = { vod: VodItem ->
+                        activePlayback = ActivePlayback(
+                            url = vod.streamUrl,
+                            title = vod.title,
+                            category = "${vod.category} · ${vod.year}",
+                            isLive = false,
+                            poster = vod.poster
+                        )
+                    },
+                    onPlaySeries = { ep: EpisodeItem, series: SeriesItem ->
+                        activePlayback = ActivePlayback(
+                            url = ep.streamUrl,
+                            title = "${series.title} - S${ep.seasonNumber}E${ep.episodeNumber}: ${ep.title}",
+                            category = series.category,
+                            isLive = false,
+                            poster = series.poster
+                        )
+                    },
+                    onOpenLiveTv = { currentTab = OneNavTab.LIVE_TV },
+                    onOpenMovies = { currentTab = OneNavTab.MOVIES }
+                )
+                OneNavTab.LIVE_TV -> LiveTvScreen(
+                    repository = repository,
+                    onPlayChannel = { ch: Channel ->
+                        activePlayback = ActivePlayback(
+                            url = ch.streamUrl,
+                            title = ch.name,
+                            category = ch.category,
+                            isLive = true,
+                            poster = ch.logo
                         )
                     }
                 )
-                NavTab.MOVIES -> VodScreen(
+                OneNavTab.MOVIES -> VodScreen(
                     repository = repository,
                     onPlayVod = { vod: VodItem ->
                         activePlayback = ActivePlayback(
                             url = vod.streamUrl,
                             title = vod.title,
                             category = "${vod.category} · ${vod.year}",
-                            isLive = false
+                            isLive = false,
+                            poster = vod.poster
                         )
                     }
                 )
-                NavTab.SERIES -> SeriesScreen(
-                    repository = repository,
-                    onPlayEpisode = { ep: EpisodeItem, series: SeriesItem ->
-                        activePlayback = ActivePlayback(
-                            url = ep.streamUrl,
-                            title = "${series.title} - S${ep.seasonNumber}E${ep.episodeNumber}: ${ep.title}",
-                            category = series.category,
-                            isLive = false
-                        )
-                    }
-                )
-                NavTab.PLAYLISTS -> PlaylistsScreen(
+                OneNavTab.PLAYLISTS -> PlaylistsScreen(
                     repository = repository
                 )
-                NavTab.PAIRING -> DevicePairingScreen(
-                    licenseManager = licenseManager
+                OneNavTab.MY_ACCOUNT -> MyAccountScreen(
+                    licenseManager = licenseManager,
+                    repository = repository
                 )
-                NavTab.DIAGNOSTICS -> DiagnosticsScreen()
             }
 
-            // Fullscreen player overlay
+            // Fullscreen player overlay with User-Agent
             activePlayback?.let { pb ->
                 FullscreenPlayer(
                     streamUrl = pb.url,
                     title = pb.title,
                     category = pb.category,
                     isLive = pb.isLive,
-                    onClose = { activePlayback = null }
+                    userAgent = activeUserAgent,
+                    onClose = { lastPos, dur ->
+                        if (dur > 0) {
+                            val frac = (lastPos.toFloat() / dur.toFloat()).coerceIn(0f, 1f)
+                            repository.updateContinueWatching(
+                                title = pb.title,
+                                url = pb.url,
+                                poster = pb.poster,
+                                progress = frac,
+                                positionMs = lastPos,
+                                isLive = pb.isLive
+                            )
+                        }
+                        activePlayback = null
+                    }
                 )
             }
         }
@@ -265,9 +297,45 @@ fun MainScreen(
     if (showProfilesDialog) {
         ModalBottomSheet(
             onDismissRequest = { showProfilesDialog = false },
-            containerColor = DarkSurface
+            containerColor = OneDarkSurface
         ) {
             ProfilesScreen(repository = repository)
+        }
+    }
+}
+
+@Composable
+fun MyAccountScreen(
+    licenseManager: LicenseManager,
+    repository: PlaylistRepository
+) {
+    var selectedSubTab by remember { mutableStateOf(0) }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(OneBlack)
+    ) {
+        TabRow(
+            selectedTabIndex = selectedSubTab,
+            containerColor = OneDarkSurface,
+            contentColor = Color.White
+        ) {
+            Tab(
+                selected = selectedSubTab == 0,
+                onClick = { selectedSubTab = 0 },
+                text = { Text("Device Pairing & Trial", fontWeight = FontWeight.Bold) }
+            )
+            Tab(
+                selected = selectedSubTab == 1,
+                onClick = { selectedSubTab = 1 },
+                text = { Text("Diagnostics & Speed", fontWeight = FontWeight.Bold) }
+            )
+        }
+
+        when (selectedSubTab) {
+            0 -> DevicePairingScreen(licenseManager = licenseManager)
+            1 -> DiagnosticsScreen()
         }
     }
 }

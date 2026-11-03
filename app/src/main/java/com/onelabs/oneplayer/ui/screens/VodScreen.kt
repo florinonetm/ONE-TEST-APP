@@ -10,9 +10,9 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -58,23 +58,23 @@ fun VodScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(OneBlack)
     ) {
         // Search field
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("Search movies, cast, genres...", color = TextMuted) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = NeonCyan) },
+            placeholder = { Text("Search movies, cast, genres...", color = TextGrayDark) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = OneRed) },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = NeonCyan,
-                unfocusedBorderColor = DarkBorder,
+                focusedBorderColor = OneRed,
+                unfocusedBorderColor = OneBorder,
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White,
-                focusedContainerColor = DarkSurface,
-                unfocusedContainerColor = DarkSurface
+                focusedContainerColor = OneDarkSurface,
+                unfocusedContainerColor = OneDarkSurface
             ),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(8.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -93,33 +93,60 @@ fun VodScreen(
                 val isSelected = category == selectedCategory
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = if (isSelected) NeonCyan else DarkSurfaceVariant,
+                    color = if (isSelected) OneRed else OneCardSurface,
                     modifier = Modifier.clickable { selectedCategory = category }
                 ) {
                     Text(
                         text = category,
-                        color = if (isSelected) DarkBackground else TextPrimary,
+                        color = Color.White,
                         fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                         fontSize = 13.sp,
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp)
                     )
                 }
             }
         }
 
-        // Movies 2-column poster grid
+        // Movies 3-column poster grid
         LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
+            columns = GridCells.Fixed(3),
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 80.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+            contentPadding = PaddingValues(start = 12.dp, end = 12.dp, top = 8.dp, bottom = 90.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
             items(filteredVod, key = { it.id }) { item ->
-                MoviePosterCard(
-                    item = item,
-                    onClick = { selectedVod = item }
-                )
+                Card(
+                    colors = CardDefaults.cardColors(containerColor = OneCardSurface),
+                    shape = RoundedCornerShape(6.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(170.dp)
+                        .clickable { selectedVod = item }
+                        .testTag("vod_card_${item.id}")
+                ) {
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        AsyncImage(
+                            model = item.poster,
+                            contentDescription = item.title,
+                            modifier = Modifier.fillMaxSize(),
+                            contentScale = ContentScale.Crop
+                        )
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.BottomCenter)
+                                .fillMaxWidth()
+                                .background(
+                                    Brush.verticalGradient(
+                                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.85f))
+                                    )
+                                )
+                                .padding(horizontal = 6.dp, vertical = 4.dp)
+                        ) {
+                            Text(item.title, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                        }
+                    }
+                }
             }
         }
     }
@@ -128,19 +155,19 @@ fun VodScreen(
     selectedVod?.let { movie ->
         ModalBottomSheet(
             onDismissRequest = { selectedVod = null },
-            containerColor = DarkSurface
+            containerColor = OneDarkSurface
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 12.dp)
+                    .padding(horizontal = 20.dp, vertical = 10.dp)
             ) {
                 // Backdrop banner
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(180.dp)
-                        .clip(RoundedCornerShape(12.dp))
+                        .height(200.dp)
+                        .clip(RoundedCornerShape(8.dp))
                 ) {
                     AsyncImage(
                         model = movie.backdrop.ifEmpty { movie.poster },
@@ -153,123 +180,85 @@ fun VodScreen(
                             .fillMaxSize()
                             .background(
                                 Brush.verticalGradient(
-                                    colors = listOf(Color.Transparent, DarkSurface.copy(alpha = 0.9f))
+                                    colors = listOf(Color.Transparent, OneDarkSurface.copy(alpha = 0.95f))
                                 )
                             )
                     )
                 }
 
                 Spacer(modifier = Modifier.height(14.dp))
-                Text(movie.title, color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                Text(movie.title, color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
 
                 Row(
                     modifier = Modifier.padding(vertical = 6.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Star, contentDescription = null, tint = AmberGold, modifier = Modifier.size(16.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(movie.rating, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text(movie.rating, color = OneGreen, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.width(12.dp))
-                    Text(movie.year, color = TextSecondary, fontSize = 13.sp)
-                    Spacer(modifier = Modifier.width(12.dp))
-                    Text(movie.duration, color = TextSecondary, fontSize = 13.sp)
+                    Text(movie.year, color = TextGray, fontSize = 13.sp)
                     Spacer(modifier = Modifier.width(12.dp))
                     Box(
                         modifier = Modifier
-                            .background(DarkSurfaceVariant, RoundedCornerShape(4.dp))
+                            .background(OneCardSurface, RoundedCornerShape(3.dp))
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
-                        Text(movie.category, color = NeonCyan, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("16+", color = TextGrayLight, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                    }
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Box(
+                        modifier = Modifier
+                            .background(OneCardSurface, RoundedCornerShape(3.dp))
+                            .padding(horizontal = 6.dp, vertical = 2.dp)
+                    ) {
+                        Text("4K Ultra HD", color = TextGrayLight, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(movie.description, color = TextSecondary, fontSize = 13.sp, lineHeight = 18.sp)
+                Spacer(modifier = Modifier.height(10.dp))
 
-                if (movie.cast.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text("Cast: ${movie.cast}", color = TextMuted, fontSize = 12.sp)
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
+                // Play Button
                 Button(
                     onClick = {
                         selectedVod = null
                         onPlayVod(movie)
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan),
-                    shape = RoundedCornerShape(10.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White),
+                    shape = RoundedCornerShape(6.dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(48.dp)
+                        .height(46.dp)
                         .testTag("vod_play_now_button")
                 ) {
-                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = DarkBackground)
+                    Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.Black, modifier = Modifier.size(24.dp))
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Play Movie (4K / 1080p)", color = DarkBackground, fontWeight = FontWeight.Bold)
+                    Text("Play", color = Color.Black, fontWeight = FontWeight.Bold, fontSize = 16.sp)
                 }
-                Spacer(modifier = Modifier.height(20.dp))
-            }
-        }
-    }
-}
 
-@Composable
-private fun MoviePosterCard(
-    item: VodItem,
-    onClick: () -> Unit
-) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
-        shape = RoundedCornerShape(12.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onClick() }
-            .testTag("vod_card_${item.id}")
-    ) {
-        Column {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(210.dp)
-            ) {
-                AsyncImage(
-                    model = item.poster,
-                    contentDescription = item.title,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-                Box(
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Add to My List Button
+                OutlinedButton(
+                    onClick = { repository.toggleFavorite(movie.id) },
+                    shape = RoundedCornerShape(6.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
                     modifier = Modifier
-                        .align(Alignment.TopEnd)
-                        .padding(8.dp)
-                        .background(Color.Black.copy(alpha = 0.7f), RoundedCornerShape(4.dp))
-                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                        .fillMaxWidth()
+                        .height(44.dp)
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Default.Star, contentDescription = null, tint = AmberGold, modifier = Modifier.size(12.dp))
-                        Spacer(modifier = Modifier.width(2.dp))
-                        Text(item.rating, color = Color.White, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                    }
+                    Icon(Icons.Default.Add, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Text("My List", color = Color.White, fontWeight = FontWeight.SemiBold)
                 }
-            }
 
-            Column(modifier = Modifier.padding(10.dp)) {
-                Text(
-                    text = item.title,
-                    color = Color.White,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    Text(item.category, color = NeonCyan, fontSize = 11.sp)
-                    Text(item.duration, color = TextMuted, fontSize = 11.sp)
+                Spacer(modifier = Modifier.height(14.dp))
+                Text(movie.description, color = TextGrayLight, fontSize = 13.sp, lineHeight = 18.sp)
+
+                if (movie.cast.isNotEmpty()) {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text("Starring: ${movie.cast}", color = TextGrayDark, fontSize = 12.sp)
                 }
+
+                Spacer(modifier = Modifier.height(24.dp))
             }
         }
     }

@@ -38,11 +38,11 @@ fun SeriesScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(OneBlack)
     ) {
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 80.dp),
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 12.dp, bottom = 90.dp),
             verticalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             items(seriesList, key = { it.id }) { series ->
@@ -58,7 +58,7 @@ fun SeriesScreen(
     selectedSeries?.let { series ->
         ModalBottomSheet(
             onDismissRequest = { selectedSeries = null },
-            containerColor = DarkSurface
+            containerColor = OneDarkSurface
         ) {
             Column(
                 modifier = Modifier
@@ -71,18 +71,18 @@ fun SeriesScreen(
                         contentDescription = series.title,
                         modifier = Modifier
                             .size(60.dp)
-                            .clip(RoundedCornerShape(8.dp)),
+                            .clip(RoundedCornerShape(6.dp)),
                         contentScale = ContentScale.Crop
                     )
                     Spacer(modifier = Modifier.width(14.dp))
                     Column {
                         Text(series.title, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text("${series.seasonsCount} Seasons · ${series.category}", color = NeonCyan, fontSize = 13.sp)
+                        Text("${series.seasonsCount} Seasons · ${series.category}", color = OneRed, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
-                Text("EPISODES (SEASON 1)", color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text("EPISODES (SEASON 1)", color = TextGray, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(10.dp))
 
                 LazyColumn(
@@ -93,8 +93,8 @@ fun SeriesScreen(
                 ) {
                     items(series.episodes) { ep ->
                         Card(
-                            colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
-                            shape = RoundedCornerShape(10.dp),
+                            colors = CardDefaults.cardColors(containerColor = OneCardSurface),
+                            shape = RoundedCornerShape(8.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .clickable {
@@ -113,17 +113,17 @@ fun SeriesScreen(
                                     contentDescription = ep.title,
                                     modifier = Modifier
                                         .size(56.dp, 40.dp)
-                                        .clip(RoundedCornerShape(6.dp)),
+                                        .clip(RoundedCornerShape(4.dp)),
                                     contentScale = ContentScale.Crop
                                 )
                                 Spacer(modifier = Modifier.width(12.dp))
                                 Column(modifier = Modifier.weight(1f)) {
                                     Text("E${ep.episodeNumber}: ${ep.title}", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
-                                    Text(ep.synopsis, color = TextSecondary, fontSize = 12.sp, maxLines = 1)
+                                    Text(ep.synopsis, color = TextGray, fontSize = 12.sp, maxLines = 1)
                                 }
-                                Text(ep.duration, color = NeonCyan, fontSize = 12.sp)
+                                Text(ep.duration, color = TextGrayLight, fontSize = 12.sp)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Icon(Icons.Default.PlayArrow, contentDescription = "Play", tint = NeonCyan)
+                                Icon(Icons.Default.PlayArrow, contentDescription = "Play", tint = OneRed)
                             }
                         }
                     }
@@ -140,8 +140,8 @@ private fun SeriesCard(
     onClick: () -> Unit
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
-        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = OneCardSurface),
+        shape = RoundedCornerShape(10.dp),
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() }
@@ -157,8 +157,8 @@ private fun SeriesCard(
                 model = series.poster,
                 contentDescription = series.title,
                 modifier = Modifier
-                    .size(90.dp, 120.dp)
-                    .clip(RoundedCornerShape(10.dp)),
+                    .size(90.dp, 125.dp)
+                    .clip(RoundedCornerShape(6.dp)),
                 contentScale = ContentScale.Crop
             )
             Spacer(modifier = Modifier.width(16.dp))
@@ -166,16 +166,14 @@ private fun SeriesCard(
                 Text(series.title, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(4.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Star, contentDescription = null, tint = AmberGold, modifier = Modifier.size(14.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(series.rating, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    Text(series.rating, color = OneGreen, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     Spacer(modifier = Modifier.width(10.dp))
-                    Text(series.year, color = TextSecondary, fontSize = 12.sp)
+                    Text(series.year, color = TextGray, fontSize = 12.sp)
                     Spacer(modifier = Modifier.width(10.dp))
-                    Text("${series.seasonsCount} Seasons", color = NeonCyan, fontSize = 12.sp)
+                    Text("${series.seasonsCount} Seasons", color = TextGrayLight, fontSize = 12.sp)
                 }
                 Spacer(modifier = Modifier.height(6.dp))
-                Text(series.description, color = TextSecondary, fontSize = 12.sp, maxLines = 2, lineHeight = 16.sp)
+                Text(series.description, color = TextGray, fontSize = 12.sp, maxLines = 2, lineHeight = 16.sp)
             }
         }
     }

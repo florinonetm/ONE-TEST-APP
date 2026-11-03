@@ -61,30 +61,30 @@ fun LiveTvScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(OneBlack)
     ) {
         // Search field
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            placeholder = { Text("Search live channels & programs...", color = TextMuted) },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = NeonCyan) },
+            placeholder = { Text("Search live channels & EPG...", color = TextGrayDark) },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = "Search", tint = OneRed) },
             trailingIcon = {
                 if (searchQuery.isNotEmpty()) {
                     IconButton(onClick = { searchQuery = "" }) {
-                        Icon(Icons.Default.Clear, contentDescription = "Clear", tint = TextSecondary)
+                        Icon(Icons.Default.Clear, contentDescription = "Clear", tint = TextGray)
                     }
                 }
             },
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = NeonCyan,
-                unfocusedBorderColor = DarkBorder,
+                focusedBorderColor = OneRed,
+                unfocusedBorderColor = OneBorder,
                 focusedTextColor = Color.White,
                 unfocusedTextColor = Color.White,
-                focusedContainerColor = DarkSurface,
-                unfocusedContainerColor = DarkSurface
+                focusedContainerColor = OneDarkSurface,
+                unfocusedContainerColor = OneDarkSurface
             ),
-            shape = RoundedCornerShape(12.dp),
+            shape = RoundedCornerShape(8.dp),
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -103,27 +103,27 @@ fun LiveTvScreen(
                 val isSelected = category == selectedCategory
                 Surface(
                     shape = RoundedCornerShape(20.dp),
-                    color = if (isSelected) NeonCyan else DarkSurfaceVariant,
+                    color = if (isSelected) OneRed else OneCardSurface,
                     modifier = Modifier
                         .clickable { selectedCategory = category }
                         .testTag("category_pill_${category.replace(" ", "_")}")
                 ) {
                     Row(
-                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp),
+                        modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         if (category == "Favorites") {
                             Icon(
                                 Icons.Default.Star,
                                 contentDescription = null,
-                                tint = if (isSelected) DarkBackground else AmberGold,
-                                modifier = Modifier.size(16.dp)
+                                tint = if (isSelected) Color.White else OneGold,
+                                modifier = Modifier.size(15.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                         }
                         Text(
                             text = category,
-                            color = if (isSelected) DarkBackground else TextPrimary,
+                            color = Color.White,
                             fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                             fontSize = 13.sp
                         )
@@ -144,21 +144,21 @@ fun LiveTvScreen(
                     Icon(
                         Icons.Default.TvOff,
                         contentDescription = null,
-                        tint = TextMuted,
+                        tint = TextGrayDark,
                         modifier = Modifier.size(48.dp)
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
                         "No channels found in $selectedCategory",
-                        color = TextSecondary,
-                        fontSize = 15.sp
+                        color = TextGray,
+                        fontSize = 14.sp
                     )
                 }
             }
         } else {
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 80.dp),
+                contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 90.dp),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 items(filteredChannels, key = { it.id }) { channel ->
@@ -179,42 +179,43 @@ fun LiveTvScreen(
         val epgList = remember(ch) { repository.getEpgForChannel(ch) }
         ModalBottomSheet(
             onDismissRequest = { selectedEpgChannel = null },
-            containerColor = DarkSurface
+            containerColor = OneDarkSurface
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
+                    .padding(horizontal = 24.dp, vertical = 14.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     AsyncImage(
                         model = ch.logo.ifEmpty { "https://images.unsplash.com/photo-1593784991095-a205069470b6?w=200" },
                         contentDescription = ch.name,
                         modifier = Modifier
-                            .size(48.dp)
+                            .size(50.dp)
                             .clip(RoundedCornerShape(8.dp)),
                         contentScale = ContentScale.Crop
                     )
                     Spacer(modifier = Modifier.width(14.dp))
                     Column(modifier = Modifier.weight(1f)) {
                         Text(ch.name, color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-                        Text(ch.category, color = NeonCyan, fontSize = 13.sp)
+                        Text(ch.category, color = OneRed, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
                     }
                     Button(
                         onClick = {
                             selectedEpgChannel = null
                             onPlayChannel(ch)
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = NeonCyan)
+                        colors = ButtonDefaults.buttonColors(containerColor = OneRed),
+                        shape = RoundedCornerShape(6.dp)
                     ) {
-                        Icon(Icons.Default.PlayArrow, contentDescription = null, tint = DarkBackground)
+                        Icon(Icons.Default.PlayArrow, contentDescription = null, tint = Color.White)
                         Spacer(modifier = Modifier.width(4.dp))
-                        Text("Watch", color = DarkBackground, fontWeight = FontWeight.Bold)
+                        Text("Watch", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
 
-                Spacer(modifier = Modifier.height(20.dp))
-                Text("ELECTRONIC PROGRAM GUIDE (EPG)", color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(18.dp))
+                Text("ELECTRONIC PROGRAM GUIDE (EPG)", color = TextGray, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(10.dp))
 
                 epgList.forEach { program ->
@@ -236,8 +237,8 @@ private fun ChannelCard(
     onPlay: () -> Unit
 ) {
     Card(
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
-        shape = RoundedCornerShape(14.dp),
+        colors = CardDefaults.cardColors(containerColor = OneCardSurface),
+        shape = RoundedCornerShape(10.dp),
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onPlay() }
@@ -248,14 +249,13 @@ private fun ChannelCard(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                // Channel Logo
                 AsyncImage(
                     model = channel.logo.ifEmpty { "https://images.unsplash.com/photo-1593784991095-a205069470b6?w=200" },
                     contentDescription = channel.name,
                     modifier = Modifier
-                        .size(44.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .background(DarkSurfaceVariant),
+                        .size(46.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(OneSurfaceVariant),
                     contentScale = ContentScale.Crop
                 )
 
@@ -271,13 +271,12 @@ private fun ChannelCard(
                     )
                     Text(
                         text = channel.currentProgram ?: "Live Broadcast",
-                        color = NeonCyan,
+                        color = TextGrayLight,
                         fontSize = 13.sp,
                         maxLines = 1
                     )
                 }
 
-                // Info / EPG button
                 IconButton(
                     onClick = onShowEpg,
                     modifier = Modifier.size(36.dp)
@@ -285,12 +284,11 @@ private fun ChannelCard(
                     Icon(
                         Icons.Default.Info,
                         contentDescription = "Program Guide",
-                        tint = TextSecondary,
+                        tint = TextGray,
                         modifier = Modifier.size(20.dp)
                     )
                 }
 
-                // Favorite Star
                 IconButton(
                     onClick = onToggleFavorite,
                     modifier = Modifier.size(36.dp)
@@ -298,22 +296,21 @@ private fun ChannelCard(
                     Icon(
                         if (isFavorite) Icons.Default.Star else Icons.Default.StarBorder,
                         contentDescription = "Favorite",
-                        tint = if (isFavorite) AmberGold else TextSecondary,
+                        tint = if (isFavorite) OneGold else TextGray,
                         modifier = Modifier.size(22.dp)
                     )
                 }
             }
 
-            // Program progress bar
             Spacer(modifier = Modifier.height(10.dp))
             LinearProgressIndicator(
                 progress = { channel.programProgress },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(4.dp)
+                    .height(3.5.dp)
                     .clip(RoundedCornerShape(2.dp)),
-                color = NeonCyan,
-                trackColor = DarkSurfaceVariant
+                color = OneRed,
+                trackColor = OneSurfaceVariant
             )
 
             if (channel.nextProgram != null) {
@@ -324,16 +321,16 @@ private fun ChannelCard(
                 ) {
                     Text(
                         text = "Next: ${channel.nextProgram}",
-                        color = TextMuted,
+                        color = TextGrayDark,
                         fontSize = 11.sp,
                         maxLines = 1
                     )
                     Box(
                         modifier = Modifier
-                            .background(DangerRed.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                            .background(OneRed.copy(alpha = 0.2f), RoundedCornerShape(3.dp))
                             .padding(horizontal = 6.dp, vertical = 2.dp)
                     ) {
-                        Text("LIVE", color = DangerRed, fontSize = 9.sp, fontWeight = FontWeight.Bold)
+                        Text("LIVE", color = OneRed, fontSize = 9.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -345,9 +342,9 @@ private fun ChannelCard(
 private fun EpgItemRow(program: EpgProgram) {
     Card(
         colors = CardDefaults.cardColors(
-            containerColor = if (program.isCurrent) DarkSurfaceVariant else DarkSurface
+            containerColor = if (program.isCurrent) OneSurfaceVariant else OneCardSurface
         ),
-        shape = RoundedCornerShape(10.dp),
+        shape = RoundedCornerShape(8.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -356,9 +353,9 @@ private fun EpgItemRow(program: EpgProgram) {
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Column(modifier = Modifier.width(70.dp)) {
-                Text(program.startTime, color = if (program.isCurrent) NeonCyan else TextPrimary, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-                Text(program.endTime, color = TextMuted, fontSize = 11.sp)
+            Column(modifier = Modifier.width(65.dp)) {
+                Text(program.startTime, color = if (program.isCurrent) OneRed else TextWhite, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                Text(program.endTime, color = TextGrayDark, fontSize = 11.sp)
             }
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
@@ -368,12 +365,12 @@ private fun EpgItemRow(program: EpgProgram) {
                         Spacer(modifier = Modifier.width(6.dp))
                         Box(
                             modifier = Modifier
-                                .background(NeonCyan, CircleShape)
+                                .background(OneRed, CircleShape)
                                 .size(6.dp)
                         )
                     }
                 }
-                Text(program.description, color = TextSecondary, fontSize = 12.sp, maxLines = 2)
+                Text(program.description, color = TextGray, fontSize = 12.sp, maxLines = 2)
             }
         }
     }

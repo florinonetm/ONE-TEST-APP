@@ -30,12 +30,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
-import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.PlaybackParameters
 import androidx.media3.common.Player
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.AspectRatioFrameLayout
 import androidx.media3.ui.PlayerView
 import com.onelabs.oneplayer.ui.theme.*
@@ -55,7 +56,8 @@ fun FullscreenPlayer(
     title: String,
     category: String = "Live TV",
     isLive: Boolean = true,
-    onClose: () -> Unit
+    userAgent: String = "VLC/3.0.18 LibVLC/3.0.18",
+    onClose: (lastPosition: Long, duration: Long) -> Unit
 ) {
     val context = LocalContext.current
     val audioManager = remember { context.getSystemService(Context.AUDIO_SERVICE) as AudioManager }
@@ -71,21 +73,32 @@ fun FullscreenPlayer(
     var playbackSpeed by remember { mutableFloatStateOf(1.0f) }
     var hudMessage by remember { mutableStateOf<String?>(null) }
 
-    // Dialog sheets
     var showSpeedDialog by remember { mutableStateOf(false) }
-    var showSleepDialog by remember { mutableStateOf(false) }
     var showAudioDialog by remember { mutableStateOf(false) }
 
-    val exoPlayer = remember {
-        ExoPlayer.Builder(context).build().apply {
-            playWhenReady = true
-            val mediaItem = MediaItem.fromUri(streamUrl)
-            setMediaItem(mediaItem)
-            prepare()
-        }
+    // Media3 ExoPlayer with User-Agent & 120s HTTP Read Timeout
+    val exoPlayer = remember(streamUrl, userAgent) {
+        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+            .setUserAgent(userAgent)
+            .setConnectTimeoutMs(60000)
+            .setReadTimeoutMs(120000)
+            .setAllowCrossProtocolRedirects(true)
+
+        val mediaSourceFactory = DefaultMediaSourceFactory(context)
+            .setDataSourceFactory(httpDataSourceFactory)
+
+        ExoPlayer.Builder(context)
+            .setMediaSourceFactory(mediaSourceFactory)
+            .build()
+            .apply {
+                playWhenReady = true
+                val mediaItem = MediaItem.fromUri(streamUrl)
+                setMediaItem(mediaItem)
+                prepare()
+            }
     }
 
-    DisposableEffect(streamUrl) {
+    DisposableEffect(exoPlayer) {
         val listener = object : Player.Listener {
             override fun onPlaybackStateChanged(state: Int) {
                 isLoading = state == Player.STATE_BUFFERING
@@ -100,7 +113,7 @@ fun FullscreenPlayer(
             }
 
             override fun onPlayerError(error: androidx.media3.common.PlaybackException) {
-                errorMessage = "Playback Error: ${error.localizedMessage ?: "Unable to stream"}"
+                errorMessage = "Stream Error (${error.errorCodeName}). Verify stream or try different User-Agent."
                 isLoading = false
             }
         }
@@ -112,7 +125,7 @@ fun FullscreenPlayer(
         }
     }
 
-    // Auto-update playback progress
+    // Progress updates
     LaunchedEffect(isPlaying) {
         while (isPlaying) {
             currentPosition = exoPlayer.currentPosition
@@ -123,12 +136,12 @@ fun FullscreenPlayer(
     // Auto-hide controls
     LaunchedEffect(controlsVisible) {
         if (controlsVisible) {
-            delay(5000)
+            delay(4500)
             controlsVisible = false
         }
     }
 
-    // Auto-dismiss HUD toast
+    // HUD Toast timer
     LaunchedEffect(hudMessage) {
         if (hudMessage != null) {
             delay(2000)
@@ -151,7 +164,6 @@ fun FullscreenPlayer(
                     val screenWidth = size.width
                     val x = change.position.x
                     if (x > screenWidth / 2) {
-                        // Volume control
                         val maxVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
                         val currVol = audioManager.getStreamVolume(AudioManager.STREAM_MUSIC)
                         val newVol = if (dragAmount < 0) {
@@ -163,13 +175,12 @@ fun FullscreenPlayer(
                         val percent = (newVol * 100) / maxVol
                         hudMessage = "🔊 Volume: $percent%"
                     } else {
-                        // Gesture feedback
                         hudMessage = if (dragAmount < 0) "☀️ Brightness Up" else "🌙 Brightness Down"
                     }
                 }
             }
     ) {
-        // Media3 PlayerView
+        // ExoPlayer View
         AndroidView(
             factory = { ctx ->
                 PlayerView(ctx).apply {
@@ -188,10 +199,10 @@ fun FullscreenPlayer(
             modifier = Modifier.fillMaxSize()
         )
 
-        // Loading spinner
+        // Loading spinner with Red
         if (isLoading) {
             CircularProgressIndicator(
-                color = NeonCyan,
+                color = OneRed,
                 strokeWidth = 3.dp,
                 modifier = Modifier
                     .size(54.dp)
@@ -199,10 +210,10 @@ fun FullscreenPlayer(
             )
         }
 
-        // Error message banner
+        // Error Card
         if (errorMessage != null) {
             Card(
-                colors = CardDefaults.cardColors(containerColor = DarkSurface.copy(alpha = 0.95f)),
+                colors = CardDefaults.cardColors(containerColor = OneDarkSurface.copy(alpha = 0.95f)),
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -212,7 +223,7 @@ fun FullscreenPlayer(
                     modifier = Modifier.padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = DangerRed, modifier = Modifier.size(40.dp))
+                    Icon(Icons.Default.ErrorOutline, contentDescription = null, tint = OneRed, modifier = Modifier.size(40.dp))
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(errorMessage ?: "", color = Color.White, fontSize = 14.sp)
                     Spacer(modifier = Modifier.height(16.dp))
@@ -222,9 +233,9 @@ fun FullscreenPlayer(
                             exoPlayer.prepare()
                             exoPlayer.play()
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = NeonCyan)
+                        colors = ButtonDefaults.buttonColors(containerColor = OneRed)
                     ) {
-                        Text("Retry Stream", color = DarkBackground)
+                        Text("Retry Stream", color = Color.White, fontWeight = FontWeight.Bold)
                     }
                 }
             }
@@ -236,14 +247,14 @@ fun FullscreenPlayer(
                 modifier = Modifier
                     .align(Alignment.TopCenter)
                     .padding(top = 70.dp)
-                    .background(Color.Black.copy(alpha = 0.75f), RoundedCornerShape(20.dp))
+                    .background(Color.Black.copy(alpha = 0.8f), RoundedCornerShape(20.dp))
                     .padding(horizontal = 20.dp, vertical = 8.dp)
             ) {
-                Text(msg, color = NeonCyan, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                Text(msg, color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             }
         }
 
-        // Animated Controls Overlay
+        // Cinematic Controls
         AnimatedVisibility(
             visible = controlsVisible,
             enter = fadeIn(),
@@ -253,7 +264,7 @@ fun FullscreenPlayer(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(Color.Black.copy(alpha = 0.45f))
+                    .background(Color.Black.copy(alpha = 0.5f))
             ) {
                 // Top Bar
                 Row(
@@ -264,10 +275,10 @@ fun FullscreenPlayer(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(
-                        onClick = onClose,
+                        onClick = { onClose(currentPosition, duration) },
                         modifier = Modifier
                             .testTag("player_back_button")
-                            .background(DarkSurface.copy(alpha = 0.7f), CircleShape)
+                            .background(OneDarkSurface.copy(alpha = 0.7f), CircleShape)
                     ) {
                         Icon(
                             Icons.AutoMirrored.Filled.ArrowBack,
@@ -283,7 +294,7 @@ fun FullscreenPlayer(
                             Text(
                                 text = title,
                                 color = Color.White,
-                                fontSize = 18.sp,
+                                fontSize = 17.sp,
                                 fontWeight = FontWeight.Bold,
                                 maxLines = 1
                             )
@@ -291,7 +302,7 @@ fun FullscreenPlayer(
                             if (isLive) {
                                 Box(
                                     modifier = Modifier
-                                        .background(DangerRed, RoundedCornerShape(4.dp))
+                                        .background(OneRed, RoundedCornerShape(4.dp))
                                         .padding(horizontal = 6.dp, vertical = 2.dp)
                                 ) {
                                     Text("LIVE", color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
@@ -299,9 +310,9 @@ fun FullscreenPlayer(
                             }
                         }
                         Text(
-                            text = category,
-                            color = TextSecondary,
-                            fontSize = 12.sp
+                            text = "$category · UA: ${userAgent.take(18)}...",
+                            color = TextGray,
+                            fontSize = 11.sp
                         )
                     }
 
@@ -316,22 +327,20 @@ fun FullscreenPlayer(
                             hudMessage = "Aspect: ${aspectMode.label}"
                         },
                         modifier = Modifier
-                            .testTag("player_aspect_button")
-                            .background(DarkSurface.copy(alpha = 0.7f), CircleShape)
+                            .background(OneDarkSurface.copy(alpha = 0.7f), CircleShape)
                     ) {
-                        Icon(Icons.Default.AspectRatio, contentDescription = "Aspect Ratio", tint = NeonCyan)
+                        Icon(Icons.Default.AspectRatio, contentDescription = "Aspect Ratio", tint = Color.White)
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    // Audio track button
+                    // Audio & Subtitles button
                     IconButton(
                         onClick = { showAudioDialog = true },
                         modifier = Modifier
-                            .testTag("player_audio_button")
-                            .background(DarkSurface.copy(alpha = 0.7f), CircleShape)
+                            .background(OneDarkSurface.copy(alpha = 0.7f), CircleShape)
                     ) {
-                        Icon(Icons.Default.Audiotrack, contentDescription = "Audio Tracks", tint = Color.White)
+                        Icon(Icons.Default.Subtitles, contentDescription = "Audio & Subtitles", tint = Color.White)
                     }
 
                     Spacer(modifier = Modifier.width(8.dp))
@@ -340,18 +349,17 @@ fun FullscreenPlayer(
                     IconButton(
                         onClick = { showSpeedDialog = true },
                         modifier = Modifier
-                            .testTag("player_speed_button")
-                            .background(DarkSurface.copy(alpha = 0.7f), CircleShape)
+                            .background(OneDarkSurface.copy(alpha = 0.7f), CircleShape)
                     ) {
                         Icon(Icons.Default.Speed, contentDescription = "Speed", tint = Color.White)
                     }
                 }
 
-                // Center playback controls
+                // Center playback controls (Rewind 10s, Play/Pause, Forward 10s)
                 Row(
                     modifier = Modifier.align(Alignment.Center),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(28.dp)
+                    horizontalArrangement = Arrangement.spacedBy(32.dp)
                 ) {
                     // Rewind 10s
                     IconButton(
@@ -361,13 +369,13 @@ fun FullscreenPlayer(
                             hudMessage = "⏪ -10s"
                         },
                         modifier = Modifier
-                            .size(52.dp)
-                            .background(DarkSurface.copy(alpha = 0.8f), CircleShape)
+                            .size(54.dp)
+                            .background(OneDarkSurface.copy(alpha = 0.8f), CircleShape)
                     ) {
-                        Icon(Icons.Default.Replay10, contentDescription = "Rewind 10 seconds", tint = Color.White, modifier = Modifier.size(32.dp))
+                        Icon(Icons.Default.Replay10, contentDescription = "Rewind 10s", tint = Color.White, modifier = Modifier.size(32.dp))
                     }
 
-                    // Play/Pause
+                    // Play/Pause with White circle
                     IconButton(
                         onClick = {
                             if (exoPlayer.isPlaying) {
@@ -377,14 +385,14 @@ fun FullscreenPlayer(
                             }
                         },
                         modifier = Modifier
-                            .size(72.dp)
-                            .background(NeonCyan, CircleShape)
+                            .size(76.dp)
+                            .background(Color.White, CircleShape)
                     ) {
                         Icon(
                             if (isPlaying) Icons.Default.Pause else Icons.Default.PlayArrow,
                             contentDescription = if (isPlaying) "Pause" else "Play",
-                            tint = DarkBackground,
-                            modifier = Modifier.size(44.dp)
+                            tint = Color.Black,
+                            modifier = Modifier.size(46.dp)
                         )
                     }
 
@@ -396,14 +404,14 @@ fun FullscreenPlayer(
                             hudMessage = "⏩ +10s"
                         },
                         modifier = Modifier
-                            .size(52.dp)
-                            .background(DarkSurface.copy(alpha = 0.8f), CircleShape)
+                            .size(54.dp)
+                            .background(OneDarkSurface.copy(alpha = 0.8f), CircleShape)
                     ) {
-                        Icon(Icons.Default.Forward10, contentDescription = "Forward 10 seconds", tint = Color.White, modifier = Modifier.size(32.dp))
+                        Icon(Icons.Default.Forward10, contentDescription = "Forward 10s", tint = Color.White, modifier = Modifier.size(32.dp))
                     }
                 }
 
-                // Bottom Timeline & Actions
+                // Bottom Timeline & Red Scrubber
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -419,7 +427,8 @@ fun FullscreenPlayer(
                             Text(
                                 text = formatDuration(currentPosition),
                                 color = Color.White,
-                                fontSize = 12.sp
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
                             )
                             Slider(
                                 value = if (duration > 0) currentPosition.toFloat() / duration else 0f,
@@ -429,9 +438,9 @@ fun FullscreenPlayer(
                                     exoPlayer.seekTo(target)
                                 },
                                 colors = SliderDefaults.colors(
-                                    thumbColor = NeonCyan,
-                                    activeTrackColor = NeonCyan,
-                                    inactiveTrackColor = Color.White.copy(alpha = 0.3f)
+                                    thumbColor = OneRed,
+                                    activeTrackColor = OneRed,
+                                    inactiveTrackColor = Color.White.copy(alpha = 0.25f)
                                 ),
                                 modifier = Modifier
                                     .weight(1f)
@@ -439,12 +448,11 @@ fun FullscreenPlayer(
                             )
                             Text(
                                 text = formatDuration(duration),
-                                color = TextSecondary,
+                                color = TextGray,
                                 fontSize = 12.sp
                             )
                         }
                     } else {
-                        // Live stream indicator bar
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -454,14 +462,14 @@ fun FullscreenPlayer(
                             Box(
                                 modifier = Modifier
                                     .size(8.dp)
-                                    .background(NeonLime, CircleShape)
+                                    .background(OneRed, CircleShape)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
                             Text(
-                                text = "Playing Live Stream · Hardware-Accelerated (Media3)",
-                                color = NeonLime,
+                                text = "LIVE BROADCAST · Media3 Multi-Format Engine",
+                                color = Color.White,
                                 fontSize = 12.sp,
-                                fontWeight = FontWeight.Medium
+                                fontWeight = FontWeight.SemiBold
                             )
                         }
                     }
@@ -474,8 +482,8 @@ fun FullscreenPlayer(
     if (showSpeedDialog) {
         AlertDialog(
             onDismissRequest = { showSpeedDialog = false },
-            title = { Text("Playback Speed", color = Color.White) },
-            containerColor = DarkSurface,
+            title = { Text("Playback Speed", color = Color.White, fontWeight = FontWeight.Bold) },
+            containerColor = OneDarkSurface,
             text = {
                 Column {
                     listOf(0.5f, 0.75f, 1.0f, 1.25f, 1.5f, 2.0f).forEach { speed ->
@@ -494,7 +502,7 @@ fun FullscreenPlayer(
                             RadioButton(
                                 selected = playbackSpeed == speed,
                                 onClick = null,
-                                colors = RadioButtonDefaults.colors(selectedColor = NeonCyan)
+                                colors = RadioButtonDefaults.colors(selectedColor = OneRed)
                             )
                             Spacer(modifier = Modifier.width(12.dp))
                             Text("${speed}x", color = Color.White, fontSize = 15.sp)
@@ -504,24 +512,26 @@ fun FullscreenPlayer(
             },
             confirmButton = {
                 TextButton(onClick = { showSpeedDialog = false }) {
-                    Text("Close", color = NeonCyan)
+                    Text("Close", color = OneRed)
                 }
             }
         )
     }
 
-    // Audio Tracks Dialog
+    // Audio & Subtitles Dialog
     if (showAudioDialog) {
         AlertDialog(
             onDismissRequest = { showAudioDialog = false },
-            title = { Text("Audio Stream & Tracks", color = Color.White) },
-            containerColor = DarkSurface,
+            title = { Text("Audio & Subtitles", color = Color.White, fontWeight = FontWeight.Bold) },
+            containerColor = OneDarkSurface,
             text = {
                 Column {
+                    Text("AUDIO", color = TextGray, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(4.dp))
                     listOf(
-                        "Default Audio (Stereo AAC)",
-                        "5.1 Surround (AC3/Dolby)",
-                        "Original Language Track"
+                        "Original (Stereo AAC)",
+                        "5.1 Surround Sound (Dolby Digital)",
+                        "Alternative Language Stream"
                     ).forEachIndexed { idx, trackName ->
                         Row(
                             modifier = Modifier
@@ -530,23 +540,47 @@ fun FullscreenPlayer(
                                     hudMessage = "Audio: $trackName"
                                     showAudioDialog = false
                                 }
-                                .padding(vertical = 12.dp),
+                                .padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             RadioButton(
                                 selected = idx == 0,
                                 onClick = null,
-                                colors = RadioButtonDefaults.colors(selectedColor = NeonCyan)
+                                colors = RadioButtonDefaults.colors(selectedColor = OneRed)
                             )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(trackName, color = Color.White, fontSize = 14.sp)
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(trackName, color = Color.White, fontSize = 13.sp)
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text("SUBTITLES", color = TextGray, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Spacer(modifier = Modifier.height(4.dp))
+                    listOf("Off", "English [CC]", "Romanian", "Spanish", "French").forEachIndexed { idx, sub ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable {
+                                    hudMessage = "Subtitles: $sub"
+                                    showAudioDialog = false
+                                }
+                                .padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            RadioButton(
+                                selected = idx == 0,
+                                onClick = null,
+                                colors = RadioButtonDefaults.colors(selectedColor = OneRed)
+                            )
+                            Spacer(modifier = Modifier.width(10.dp))
+                            Text(sub, color = Color.White, fontSize = 13.sp)
                         }
                     }
                 }
             },
             confirmButton = {
                 TextButton(onClick = { showAudioDialog = false }) {
-                    Text("Close", color = NeonCyan)
+                    Text("Done", color = OneRed)
                 }
             }
         )

@@ -40,15 +40,15 @@ fun DevicePairingScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(OneBlack)
             .verticalScroll(rememberScrollState())
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         // License / Trial Status Card
         Card(
-            colors = CardDefaults.cardColors(containerColor = DarkSurface),
-            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = OneCardSurface),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
@@ -58,21 +58,21 @@ fun DevicePairingScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("LICENSE & TRIAL STATUS", color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                        Text("31-DAY TRIAL & ACTIVATION", color = TextGray, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text(licenseStatus.status, color = if (licenseStatus.isTrialActive) NeonLime else DangerRed, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(licenseStatus.status, color = if (licenseStatus.isTrialActive) OneGreen else OneRed, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
                     Box(
                         modifier = Modifier
                             .background(
-                                if (licenseStatus.isTrialActive) NeonLime.copy(alpha = 0.2f) else DangerRed.copy(alpha = 0.2f),
+                                if (licenseStatus.isTrialActive) OneGreen.copy(alpha = 0.2f) else OneRed.copy(alpha = 0.2f),
                                 RoundedCornerShape(20.dp)
                             )
                             .padding(horizontal = 12.dp, vertical = 6.dp)
                     ) {
                         Text(
                             "${licenseStatus.daysRemaining} Days Left",
-                            color = if (licenseStatus.isTrialActive) NeonLime else DangerRed,
+                            color = if (licenseStatus.isTrialActive) OneGreen else OneRed,
                             fontSize = 12.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -84,34 +84,34 @@ fun DevicePairingScreen(
                     progress = { (licenseStatus.daysRemaining.toFloat() / 31f).coerceIn(0f, 1f) },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(6.dp),
-                    color = NeonCyan,
-                    trackColor = DarkSurfaceVariant
+                        .height(5.dp),
+                    color = OneRed,
+                    trackColor = OneSurfaceVariant
                 )
             }
         }
 
         // MAC & Device Key Card
         Card(
-            colors = CardDefaults.cardColors(containerColor = DarkSurface),
-            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = OneCardSurface),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
-                Text("DEVICE IDENTIFICATION", color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Text("DEVICE PAIRING CREDENTIALS", color = TextGray, fontSize = 11.sp, fontWeight = FontWeight.Bold)
                 Spacer(modifier = Modifier.height(12.dp))
 
                 // MAC Address Row
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(DarkSurfaceVariant, RoundedCornerShape(10.dp))
+                        .background(OneSurfaceVariant, RoundedCornerShape(8.dp))
                         .padding(horizontal = 14.dp, vertical = 10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("MAC Address", color = TextMuted, fontSize = 11.sp)
+                        Text("MAC Address", color = TextGrayDark, fontSize = 11.sp)
                         Text(
                             licenseStatus.macAddress,
                             color = Color.White,
@@ -126,7 +126,7 @@ fun DevicePairingScreen(
                             syncResultMsg = "MAC Address copied to clipboard!"
                         }
                     ) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy MAC", tint = NeonCyan)
+                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy MAC", tint = OneRed)
                     }
                 }
 
@@ -136,16 +136,16 @@ fun DevicePairingScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .background(DarkSurfaceVariant, RoundedCornerShape(10.dp))
+                        .background(OneSurfaceVariant, RoundedCornerShape(8.dp))
                         .padding(horizontal = 14.dp, vertical = 10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Column {
-                        Text("6-Digit Device Key", color = TextMuted, fontSize = 11.sp)
+                        Text("6-Digit Device Key", color = TextGrayDark, fontSize = 11.sp)
                         Text(
                             licenseStatus.deviceKey,
-                            color = NeonCyan,
+                            color = Color.White,
                             fontSize = 22.sp,
                             fontWeight = FontWeight.ExtraBold,
                             fontFamily = FontFamily.Monospace,
@@ -158,7 +158,7 @@ fun DevicePairingScreen(
                             syncResultMsg = "Device Key copied!"
                         }
                     ) {
-                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy Key", tint = NeonCyan)
+                        Icon(Icons.Default.ContentCopy, contentDescription = "Copy Key", tint = OneRed)
                     }
                 }
             }
@@ -178,19 +178,19 @@ fun DevicePairingScreen(
                         syncResultMsg = res.second
                     }
                 },
-                colors = ButtonDefaults.buttonColors(containerColor = NeonCyan),
-                shape = RoundedCornerShape(10.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = OneRed),
+                shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .weight(1f)
-                    .height(48.dp)
+                    .height(46.dp)
                     .testTag("sync_cloud_button")
             ) {
                 if (isChecking) {
-                    CircularProgressIndicator(color = DarkBackground, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    CircularProgressIndicator(color = Color.White, modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
                 } else {
-                    Icon(Icons.Default.Sync, contentDescription = null, tint = DarkBackground)
+                    Icon(Icons.Default.Sync, contentDescription = null, tint = Color.White)
                     Spacer(modifier = Modifier.width(6.dp))
-                    Text("Sync Cloud", color = DarkBackground, fontWeight = FontWeight.Bold)
+                    Text("Sync Cloud", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             }
 
@@ -202,10 +202,10 @@ fun DevicePairingScreen(
                     }
                 },
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
-                shape = RoundedCornerShape(10.dp),
+                shape = RoundedCornerShape(8.dp),
                 modifier = Modifier
                     .weight(1f)
-                    .height(48.dp)
+                    .height(46.dp)
                     .testTag("check_license_button")
             ) {
                 Icon(Icons.Default.VerifiedUser, contentDescription = null, tint = Color.White)
@@ -217,43 +217,43 @@ fun DevicePairingScreen(
         // Sync result feedback banner
         syncResultMsg?.let { msg ->
             Card(
-                colors = CardDefaults.cardColors(containerColor = DarkSurfaceVariant),
-                shape = RoundedCornerShape(10.dp),
+                colors = CardDefaults.cardColors(containerColor = OneSurfaceVariant),
+                shape = RoundedCornerShape(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Row(
                     modifier = Modifier.padding(14.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(Icons.Default.Info, contentDescription = null, tint = NeonCyan, modifier = Modifier.size(20.dp))
+                    Icon(Icons.Default.Info, contentDescription = null, tint = OneRed, modifier = Modifier.size(20.dp))
                     Spacer(modifier = Modifier.width(10.dp))
                     Text(msg, color = Color.White, fontSize = 13.sp, modifier = Modifier.weight(1f))
                     IconButton(onClick = { syncResultMsg = null }, modifier = Modifier.size(20.dp)) {
-                        Icon(Icons.Default.Close, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(16.dp))
+                        Icon(Icons.Default.Close, contentDescription = null, tint = TextGray, modifier = Modifier.size(16.dp))
                     }
                 }
             }
         }
 
-        // How to Pair Instructions Card
+        // Instructions Card
         Card(
-            colors = CardDefaults.cardColors(containerColor = DarkSurface),
-            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(containerColor = OneCardSurface),
+            shape = RoundedCornerShape(12.dp),
             modifier = Modifier.fillMaxWidth()
         ) {
             Column(modifier = Modifier.padding(20.dp)) {
-                Text("HOW TO PAIR VIA ONEAPK.RO", color = TextSecondary, fontSize = 11.sp, fontWeight = FontWeight.Bold)
-                Spacer(modifier = Modifier.height(12.dp))
+                Text("PAIRING INSTRUCTIONS (ONEAPK.RO)", color = TextGray, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                Spacer(modifier = Modifier.height(10.dp))
 
                 listOf(
-                    "1. Open https://oneapk.ro on your smartphone, tablet, or PC browser.",
+                    "1. Open https://oneapk.ro on your smartphone or PC browser.",
                     "2. Enter your MAC address (${licenseStatus.macAddress}) and 6-digit Device Key (${licenseStatus.deviceKey}).",
-                    "3. Add your IPTV M3U Playlist URLs or Xtream Codes login credentials.",
-                    "4. Tap 'Sync Cloud' above to automatically load your channels, movies, and series on this device."
+                    "3. Add your IPTV M3U Playlist URLs or Xtream Codes credentials.",
+                    "4. Tap 'Sync Cloud' above to automatically populate your streams."
                 ).forEach { step ->
                     Text(
                         step,
-                        color = TextPrimary,
+                        color = TextGrayLight,
                         fontSize = 13.sp,
                         lineHeight = 18.sp,
                         modifier = Modifier.padding(vertical = 4.dp)

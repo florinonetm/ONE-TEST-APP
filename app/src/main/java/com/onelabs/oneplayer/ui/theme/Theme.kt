@@ -5,22 +5,22 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 
-private val DarkColorScheme = darkColorScheme(
-    primary = NeonCyan,
-    onPrimary = DarkBackground,
-    primaryContainer = DarkSurfaceVariant,
-    onPrimaryContainer = NeonCyan,
-    secondary = ElectricPurple,
-    onSecondary = DarkBackground,
-    tertiary = NeonLime,
-    background = DarkBackground,
-    onBackground = TextPrimary,
-    surface = DarkSurface,
-    onSurface = TextPrimary,
-    surfaceVariant = DarkSurfaceVariant,
-    onSurfaceVariant = TextSecondary,
-    outline = DarkBorder,
-    error = DangerRed
+private val OneColorScheme = darkColorScheme(
+    primary = OneRed,
+    onPrimary = TextWhite,
+    primaryContainer = OneSurfaceVariant,
+    onPrimaryContainer = TextWhite,
+    secondary = OneCrimson,
+    onSecondary = TextWhite,
+    tertiary = OneGreen,
+    background = OneBlack,
+    onBackground = TextWhite,
+    surface = OneDarkSurface,
+    onSurface = TextWhite,
+    surfaceVariant = OneCardSurface,
+    onSurfaceVariant = TextGray,
+    outline = OneBorder,
+    error = OneRed
 )
 
 @Composable
@@ -29,7 +29,7 @@ fun ONEPlayerTheme(
     content: @Composable () -> Unit
 ) {
     MaterialTheme(
-        colorScheme = DarkColorScheme,
+        colorScheme = OneColorScheme,
         content = content
     )
 }

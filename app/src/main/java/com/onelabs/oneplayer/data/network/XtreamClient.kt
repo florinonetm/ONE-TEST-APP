@@ -8,27 +8,23 @@ import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.BufferedReader
+import java.io.InputStream
 import java.io.InputStreamReader
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.nio.charset.StandardCharsets
+import java.util.zip.GZIPInputStream
 
 object XtreamClient {
+
+    const val DEFAULT_CONNECT_TIMEOUT_MS = 60000 // 60s
+    const val DEFAULT_READ_TIMEOUT_MS = 180000   // 180s (3 minutes for huge playlists)
 
     data class Account(
         val server: String,
         val username: String,
         val password: String
-    )
-
-    data class ChannelItem(
-        val id: String,
-        val name: String,
-        val streamUrl: String,
-        val logo: String,
-        val category: String,
-        val kind: StreamKind,
-        val containerExt: String = "ts"
     )
 
     data class ImportResult(
@@ -50,9 +46,11 @@ object XtreamClient {
 
     suspend fun fetchAccount(
         account: Account,
-        maxLive: Int = 1000,
-        maxVod: Int = 500,
-        maxSeries: Int = 200
+        userAgent: String = "VLC/3.0.18 LibVLC/3.0.18",
+        maxLive: Int = 50000,
+        maxVod: Int = 25000,
+        maxSeries: Int = 10000,
+        onProgress: ((Int) -> Unit)? = null
     ): ImportResult = withContext(Dispatchers.IO) {
         val server = normalizeServer(account.server)
         val u = account.username.trim()
@@ -70,25 +68,25 @@ object XtreamClient {
         }
 
         try {
-            // First verify credentials via player_api
+            // Verify credentials via player_api
             val authUrl = "$server/player_api.php?username=${enc(u)}&password=${enc(p)}"
-            val authJsonStr = httpGet(authUrl)
+            val authJsonStr = httpGet(authUrl, userAgent = userAgent)
             val authJson = JSONObject(authJsonStr)
             val userInfo = authJson.optJSONObject("user_info")
 
             if (userInfo == null || userInfo.optString("auth", "0") == "0" && userInfo.optString("status") != "Active") {
-                return@withContext fetchViaGetPhp(account)
+                return@withContext fetchViaGetPhp(account, userAgent, onProgress)
             }
 
             // Categories map
-            val liveCatMap = loadCategoryMap(server, u, p, "get_live_categories")
-            val vodCatMap = loadCategoryMap(server, u, p, "get_vod_categories")
-            val seriesCatMap = loadCategoryMap(server, u, p, "get_series_categories")
+            val liveCatMap = loadCategoryMap(server, u, p, "get_live_categories", userAgent)
+            val vodCatMap = loadCategoryMap(server, u, p, "get_vod_categories", userAgent)
+            val seriesCatMap = loadCategoryMap(server, u, p, "get_series_categories", userAgent)
 
-            val results = mutableListOf<Channel>()
+            val results = ArrayList<Channel>(4096)
 
             // 1. Live streams
-            val liveArray = loadArray(server, u, p, "get_live_streams")
+            val liveArray = loadArray(server, u, p, "get_live_streams", userAgent)
             val liveCount = minOf(liveArray.length(), maxLive)
             for (i in 0 until liveCount) {
                 val obj = liveArray.getJSONObject(i)
@@ -109,10 +107,11 @@ object XtreamClient {
                         kind = StreamKind.LIVE
                     )
                 )
+                if (i % 250 == 0) onProgress?.invoke(results.size)
             }
 
             // 2. VOD streams
-            val vodArray = loadArray(server, u, p, "get_vod_streams")
+            val vodArray = loadArray(server, u, p, "get_vod_streams", userAgent)
             val vodCount = minOf(vodArray.length(), maxVod)
             for (i in 0 until vodCount) {
                 val obj = vodArray.getJSONObject(i)
@@ -134,10 +133,11 @@ object XtreamClient {
                         kind = StreamKind.VOD
                     )
                 )
+                if (i % 250 == 0) onProgress?.invoke(results.size)
             }
 
             // 3. Series
-            val seriesArray = loadArray(server, u, p, "get_series")
+            val seriesArray = loadArray(server, u, p, "get_series", userAgent)
             val seriesCount = minOf(seriesArray.length(), maxSeries)
             for (i in 0 until seriesCount) {
                 val obj = seriesArray.getJSONObject(i)
@@ -160,29 +160,34 @@ object XtreamClient {
                 )
             }
 
+            onProgress?.invoke(results.size)
             ImportResult(
                 channels = results,
                 liveCount = liveCount,
                 vodCount = vodCount,
                 seriesCount = seriesCount,
-                message = "Imported ${results.size} streams from Xtream server",
+                message = "Successfully loaded full Xtream catalog (${results.size} streams)",
                 success = true
             )
         } catch (e: Exception) {
             // Fallback to get.php M3U
-            fetchViaGetPhp(account)
+            fetchViaGetPhp(account, userAgent, onProgress)
         }
     }
 
-    suspend fun fetchViaGetPhp(account: Account): ImportResult = withContext(Dispatchers.IO) {
+    suspend fun fetchViaGetPhp(
+        account: Account,
+        userAgent: String = "VLC/3.0.18 LibVLC/3.0.18",
+        onProgress: ((Int) -> Unit)? = null
+    ): ImportResult = withContext(Dispatchers.IO) {
         val server = normalizeServer(account.server)
         val u = account.username.trim()
         val p = account.password.trim()
 
         try {
             val getPhpUrl = "$server/get.php?username=${enc(u)}&password=${enc(p)}&type=m3u_plus&output=hls"
-            val m3uContent = httpGet(getPhpUrl)
-            val parseResult = M3uParser.parse(m3uContent, getPhpUrl, 2000)
+            val m3uContent = httpGet(getPhpUrl, userAgent = userAgent)
+            val parseResult = M3uParser.parse(m3uContent, getPhpUrl, 100000, onProgress)
 
             val channels = parseResult.channels.map {
                 Channel(
@@ -208,7 +213,7 @@ object XtreamClient {
                 liveCount = live,
                 vodCount = vod,
                 seriesCount = series,
-                message = "Imported ${channels.size} channels via get.php M3U",
+                message = "Loaded ${channels.size} channels via get.php M3U",
                 success = channels.isNotEmpty()
             )
         } catch (e: Exception) {
@@ -227,13 +232,14 @@ object XtreamClient {
         server: String,
         u: String,
         p: String,
-        action: String
+        action: String,
+        userAgent: String
     ): Map<String, String> {
         return try {
             val url = "$server/player_api.php?username=${enc(u)}&password=${enc(p)}&action=$action"
-            val jsonStr = httpGet(url)
+            val jsonStr = httpGet(url, userAgent = userAgent)
             val arr = JSONArray(jsonStr)
-            val map = mutableMapOf<String, String>()
+            val map = HashMap<String, String>()
             for (i in 0 until arr.length()) {
                 val obj = arr.getJSONObject(i)
                 val id = obj.optString("category_id")
@@ -252,30 +258,41 @@ object XtreamClient {
         server: String,
         u: String,
         p: String,
-        action: String
+        action: String,
+        userAgent: String
     ): JSONArray {
         return try {
             val url = "$server/player_api.php?username=${enc(u)}&password=${enc(p)}&action=$action"
-            val jsonStr = httpGet(url)
+            val jsonStr = httpGet(url, userAgent = userAgent)
             JSONArray(jsonStr)
         } catch (_: Exception) {
             JSONArray()
         }
     }
 
-    fun httpGet(urlStr: String, timeoutMs: Int = 12000): String {
+    fun httpGet(
+        urlStr: String,
+        userAgent: String = "VLC/3.0.18 LibVLC/3.0.18",
+        connectTimeoutMs: Int = DEFAULT_CONNECT_TIMEOUT_MS,
+        readTimeoutMs: Int = DEFAULT_READ_TIMEOUT_MS
+    ): String {
         val url = URL(urlStr)
         val conn = url.openConnection() as HttpURLConnection
         conn.requestMethod = "GET"
-        conn.connectTimeout = timeoutMs
-        conn.readTimeout = timeoutMs
-        conn.setRequestProperty("User-Agent", "ONEPlayer/1.02 (Android; SDK 35)")
+        conn.connectTimeout = connectTimeoutMs
+        conn.readTimeout = readTimeoutMs
+        conn.setRequestProperty("User-Agent", userAgent)
+        conn.setRequestProperty("Accept-Encoding", "gzip, deflate")
+        conn.setRequestProperty("Accept", "*/*")
         conn.instanceFollowRedirects = true
 
         val code = conn.responseCode
         if (code in 200..299) {
-            BufferedReader(InputStreamReader(conn.inputStream)).use { reader ->
-                return reader.readText()
+            val isGzip = "gzip".equals(conn.contentEncoding, ignoreCase = true)
+            val rawStream: InputStream = conn.inputStream
+            val stream = if (isGzip) GZIPInputStream(rawStream) else rawStream
+            return BufferedReader(InputStreamReader(stream, StandardCharsets.UTF_8), 65536).use { reader ->
+                reader.readText()
             }
         } else {
             throw Exception("HTTP $code: ${conn.responseMessage}")

@@ -72,9 +72,9 @@ class LicenseManager(context: Context) {
         try {
             val url = URL("https://oneapk.ro/pair.php?mac=${current.macAddress}&key=${current.deviceKey}")
             val conn = url.openConnection() as HttpURLConnection
-            conn.connectTimeout = 8000
-            conn.readTimeout = 8000
-            conn.setRequestProperty("User-Agent", "ONEPlayer/1.02 (Android; SDK 35)")
+            conn.connectTimeout = 30000
+            conn.readTimeout = 30000
+            conn.setRequestProperty("User-Agent", "VLC/3.0.18 LibVLC/3.0.18")
 
             if (conn.responseCode in 200..299) {
                 val response = BufferedReader(InputStreamReader(conn.inputStream)).use { it.readText() }
@@ -98,9 +98,9 @@ class LicenseManager(context: Context) {
         try {
             val url = URL("https://oneapk.ro/api/v1/playlists.php?mac=${current.macAddress}")
             val conn = url.openConnection() as HttpURLConnection
-            conn.connectTimeout = 8000
-            conn.readTimeout = 8000
-            conn.setRequestProperty("User-Agent", "ONEPlayer/1.02 (Android; SDK 35)")
+            conn.connectTimeout = 30000
+            conn.readTimeout = 30000
+            conn.setRequestProperty("User-Agent", "VLC/3.0.18 LibVLC/3.0.18")
 
             if (conn.responseCode in 200..299) {
                 val response = BufferedReader(InputStreamReader(conn.inputStream)).use { it.readText() }

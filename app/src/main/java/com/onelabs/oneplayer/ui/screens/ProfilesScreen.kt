@@ -5,7 +5,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CheckCircle
@@ -15,6 +14,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
@@ -38,14 +38,14 @@ fun ProfilesScreen(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DarkBackground)
-            .padding(16.dp)
+            .background(OneDarkSurface)
+            .padding(20.dp)
     ) {
-        Text("User Profiles & Parental Controls", color = Color.White, fontSize = 18.sp, fontWeight = FontWeight.Bold)
-        Spacer(modifier = Modifier.height(6.dp))
-        Text("Switch user to access customized favorites, history, or Kids Mode.", color = TextSecondary, fontSize = 13.sp)
+        Text("Who's Watching?", color = Color.White, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(4.dp))
+        Text("Select profile for tailored continue watching, history, and favorites.", color = TextGray, fontSize = 13.sp)
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(18.dp))
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -57,15 +57,15 @@ fun ProfilesScreen(
                     try {
                         Color(android.graphics.Color.parseColor(prof.avatarColorHex))
                     } catch (_: Exception) {
-                        NeonCyan
+                        OneRed
                     }
                 }
 
                 Card(
                     colors = CardDefaults.cardColors(
-                        containerColor = if (isActive) DarkSurfaceVariant else DarkSurface
+                        containerColor = if (isActive) OneSurfaceVariant else OneCardSurface
                     ),
-                    shape = RoundedCornerShape(14.dp),
+                    shape = RoundedCornerShape(10.dp),
                     modifier = Modifier
                         .fillMaxWidth()
                         .clickable {
@@ -87,14 +87,15 @@ fun ProfilesScreen(
                     ) {
                         Box(
                             modifier = Modifier
-                                .size(48.dp)
-                                .background(avatarColor, CircleShape),
+                                .size(46.dp)
+                                .clip(RoundedCornerShape(6.dp))
+                                .background(avatarColor),
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
                                 Icons.Default.Person,
                                 contentDescription = null,
-                                tint = DarkBackground,
+                                tint = Color.White,
                                 modifier = Modifier.size(28.dp)
                             )
                         }
@@ -108,26 +109,26 @@ fun ProfilesScreen(
                                     Spacer(modifier = Modifier.width(8.dp))
                                     Box(
                                         modifier = Modifier
-                                            .background(NeonLime.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
+                                            .background(OneGreen.copy(alpha = 0.2f), RoundedCornerShape(3.dp))
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
                                     ) {
-                                        Text("KIDS", color = NeonLime, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                                        Text("KIDS", color = OneGreen, fontSize = 10.sp, fontWeight = FontWeight.Bold)
                                     }
                                 }
                                 if (prof.pin != null) {
                                     Spacer(modifier = Modifier.width(6.dp))
-                                    Icon(Icons.Default.Lock, contentDescription = "PIN Protected", tint = AmberGold, modifier = Modifier.size(14.dp))
+                                    Icon(Icons.Default.Lock, contentDescription = "PIN Protected", tint = OneGold, modifier = Modifier.size(14.dp))
                                 }
                             }
                             Text(
-                                if (isActive) "Currently Active Profile" else "Tap to switch",
-                                color = if (isActive) NeonCyan else TextMuted,
+                                if (isActive) "Currently Watching" else "Tap to switch",
+                                color = if (isActive) OneRed else TextGrayDark,
                                 fontSize = 12.sp
                             )
                         }
 
                         if (isActive) {
-                            Icon(Icons.Default.CheckCircle, contentDescription = "Active", tint = NeonCyan, modifier = Modifier.size(24.dp))
+                            Icon(Icons.Default.CheckCircle, contentDescription = "Active", tint = OneRed, modifier = Modifier.size(24.dp))
                         }
                     }
                 }
@@ -139,11 +140,11 @@ fun ProfilesScreen(
     showPinDialogFor?.let { targetProfile ->
         AlertDialog(
             onDismissRequest = { showPinDialogFor = null },
-            title = { Text("Enter Parental PIN", color = Color.White) },
-            containerColor = DarkSurface,
+            title = { Text("Parental PIN Lock", color = Color.White, fontWeight = FontWeight.Bold) },
+            containerColor = OneDarkSurface,
             text = {
                 Column {
-                    Text("This profile is protected with a 4-digit PIN.", color = TextSecondary, fontSize = 13.sp)
+                    Text("Enter 4-digit PIN for ${targetProfile.name}", color = TextGray, fontSize = 13.sp)
                     Spacer(modifier = Modifier.height(10.dp))
                     OutlinedTextField(
                         value = enteredPin,
@@ -157,7 +158,7 @@ fun ProfilesScreen(
                     )
                     if (pinError) {
                         Spacer(modifier = Modifier.height(4.dp))
-                        Text("Incorrect PIN. Please try again.", color = DangerRed, fontSize = 12.sp)
+                        Text("Incorrect PIN. Please try again.", color = OneRed, fontSize = 12.sp)
                     }
                 }
             },
@@ -171,14 +172,14 @@ fun ProfilesScreen(
                             pinError = true
                         }
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = NeonCyan)
+                    colors = ButtonDefaults.buttonColors(containerColor = OneRed)
                 ) {
-                    Text("Unlock", color = DarkBackground, fontWeight = FontWeight.Bold)
+                    Text("Unlock", color = Color.White, fontWeight = FontWeight.Bold)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showPinDialogFor = null }) {
-                    Text("Cancel", color = TextSecondary)
+                    Text("Cancel", color = TextGray)
                 }
             }
         )

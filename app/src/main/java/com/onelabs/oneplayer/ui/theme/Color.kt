@@ -2,17 +2,25 @@ package com.onelabs.oneplayer.ui.theme
 
 import androidx.compose.ui.graphics.Color
 
-val NeonCyan = Color(0xFF00E5FF)
-val ElectricPurple = Color(0xFF7C4DFF)
-val NeonLime = Color(0xFF76FF03)
-val AmberGold = Color(0xFFFFB400)
-val DangerRed = Color(0xFFFF5252)
+// ONE Brand Primary Colors
+val OneRed = Color(0xFFE50914)
+val OneDarkRed = Color(0xFFB81D24)
+val OneCrimson = Color(0xFFFF2432)
 
-val DarkBackground = Color(0xFF0A0E1A)
-val DarkSurface = Color(0xFF111827)
-val DarkSurfaceVariant = Color(0xFF1E293B)
-val DarkBorder = Color(0xFF334155)
+// ONE Dark Surfaces
+val OneBlack = Color(0xFF080808)
+val OneDarkSurface = Color(0xFF141414)
+val OneCardSurface = Color(0xFF222222)
+val OneSurfaceVariant = Color(0xFF2A2A2A)
+val OneBorder = Color(0xFF383838)
 
-val TextPrimary = Color(0xFFF8FAFC)
-val TextSecondary = Color(0xFF94A3B8)
-val TextMuted = Color(0xFF64748B)
+// Typography Colors
+val TextWhite = Color(0xFFFFFFFF)
+val TextGrayLight = Color(0xFFE5E5E5)
+val TextGray = Color(0xFFA3A3A3)
+val TextGrayDark = Color(0xFF757575)
+
+// Accents
+val OneGold = Color(0xFFFFC107)
+val OneGreen = Color(0xFF46D369)
+val OneBlue = Color(0xFF0071EB)

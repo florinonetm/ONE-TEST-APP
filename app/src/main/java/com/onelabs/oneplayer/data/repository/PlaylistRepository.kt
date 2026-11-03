@@ -2,14 +2,7 @@ package com.onelabs.oneplayer.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
-import com.onelabs.oneplayer.data.model.Channel
-import com.onelabs.oneplayer.data.model.EpgProgram
-import com.onelabs.oneplayer.data.model.EpisodeItem
-import com.onelabs.oneplayer.data.model.PlaylistItem
-import com.onelabs.oneplayer.data.model.SeriesItem
-import com.onelabs.oneplayer.data.model.StreamKind
-import com.onelabs.oneplayer.data.model.UserProfile
-import com.onelabs.oneplayer.data.model.VodItem
+import com.onelabs.oneplayer.data.model.*
 import com.onelabs.oneplayer.data.network.XtreamClient
 import com.onelabs.oneplayer.data.parser.M3uParser
 import kotlinx.coroutines.Dispatchers
@@ -21,7 +14,20 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.UUID
 
-class PlaylistRepository(private val context: Context) {
+data class ContinueWatchingItem(
+    val id: String,
+    val title: String,
+    val streamUrl: String,
+    val poster: String,
+    val progressFraction: Float,
+    val lastPositionMs: Long,
+    val isLive: Boolean = false
+)
+
+class PlaylistRepository(
+    private val context: Context,
+    val userAgentManager: UserAgentManager
+) {
 
     private val prefs: SharedPreferences = context.getSharedPreferences("oneplayer_data_prefs", Context.MODE_PRIVATE)
 
@@ -40,17 +46,23 @@ class PlaylistRepository(private val context: Context) {
     private val _favorites = MutableStateFlow<Set<String>>(emptySet())
     val favorites: StateFlow<Set<String>> = _favorites.asStateFlow()
 
+    private val _continueWatching = MutableStateFlow<List<ContinueWatchingItem>>(emptyList())
+    val continueWatching: StateFlow<List<ContinueWatchingItem>> = _continueWatching.asStateFlow()
+
     private val _profiles = MutableStateFlow<List<UserProfile>>(emptyList())
     val profiles: StateFlow<List<UserProfile>> = _profiles.asStateFlow()
 
     private val _activeProfile = MutableStateFlow<UserProfile?>(null)
     val activeProfile: StateFlow<UserProfile?> = _activeProfile.asStateFlow()
 
+    private val _parsingProgress = MutableStateFlow<String?>(null)
+    val parsingProgress: StateFlow<String?> = _parsingProgress.asStateFlow()
+
     init {
         loadSavedFavorites()
         loadSavedProfiles()
         loadSavedPlaylists()
-        seedDefaultData()
+        seedShowcaseData()
     }
 
     private fun loadSavedFavorites() {
@@ -60,9 +72,9 @@ class PlaylistRepository(private val context: Context) {
 
     private fun loadSavedProfiles() {
         val defaultProfiles = listOf(
-            UserProfile("p1", "Main User", "#00E5FF", isKids = false),
-            UserProfile("p2", "Family / Cinema", "#FFB400", isKids = false),
-            UserProfile("p3", "Kids Zone", "#76FF03", isKids = true, pin = "1234")
+            UserProfile("p1", "Florin", "#E50914", isKids = false),
+            UserProfile("p2", "Family", "#0071EB", isKids = false),
+            UserProfile("p3", "Kids", "#46D369", isKids = true, pin = "1234")
         )
         _profiles.value = defaultProfiles
         _activeProfile.value = defaultProfiles.first()
@@ -96,95 +108,84 @@ class PlaylistRepository(private val context: Context) {
         }
     }
 
-    private fun seedDefaultData() {
+    private fun seedShowcaseData() {
         val defaultChannels = listOf(
             Channel(
                 id = "c_nasa",
-                name = "NASA TV HD",
+                name = "NASA TV 4K",
                 streamUrl = "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8",
-                logo = "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=200",
-                category = "Science & Space",
+                logo = "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=300",
+                category = "Documentaries",
                 kind = StreamKind.LIVE,
-                currentProgram = "ISS Live Stream & Earth Views",
-                nextProgram = "Artemis Mission Briefing",
+                currentProgram = "ISS Live: Orbiting the Pacific",
+                nextProgram = "Deep Space Discoveries",
                 programProgress = 0.65f
+            ),
+            Channel(
+                id = "c_redbull",
+                name = "Red Bull TV HD",
+                streamUrl = "https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8",
+                logo = "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=300",
+                category = "Sports",
+                kind = StreamKind.LIVE,
+                currentProgram = "Rampage Extreme Mountain Biking",
+                nextProgram = "Cliff Diving World Tour",
+                programProgress = 0.55f
+            ),
+            Channel(
+                id = "c_nature",
+                name = "Wild Planet 4K",
+                streamUrl = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
+                logo = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300",
+                category = "Documentaries",
+                kind = StreamKind.LIVE,
+                currentProgram = "Apex Predators of Serengeti",
+                nextProgram = "Oceans Unknown",
+                programProgress = 0.75f
             ),
             Channel(
                 id = "c_bloomberg",
                 name = "Bloomberg Quicktake",
                 streamUrl = "https://bloomberg.com/mediafeeds/quicktake/live/playlist.m3u8",
-                logo = "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=200",
-                category = "News & Business",
+                logo = "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=300",
+                category = "News",
                 kind = StreamKind.LIVE,
-                currentProgram = "Global Markets & Tech Wrap",
-                nextProgram = "Business Innovators",
+                currentProgram = "Global Tech & Market Close",
+                nextProgram = "The Future of AI",
                 programProgress = 0.30f
             ),
             Channel(
                 id = "c_dw",
-                name = "DW News English",
+                name = "DW News HD",
                 streamUrl = "https://dwamdstream102.akamaized.net/hls/live/2015525/dwstream102/index.m3u8",
-                logo = "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=200",
-                category = "News & Business",
+                logo = "https://images.unsplash.com/photo-1585829365295-ab7cd400c167?w=300",
+                category = "News",
                 kind = StreamKind.LIVE,
-                currentProgram = "World News Today",
-                nextProgram = "Conflict Zone Debate",
+                currentProgram = "Prime European Report",
+                nextProgram = "Conflict Zone",
                 programProgress = 0.80f
             ),
             Channel(
                 id = "c_france24",
-                name = "France 24 English",
+                name = "France 24 HD",
                 streamUrl = "https://static.france24.com/live/F24_EN_LO_HLS/live_tv.m3u8",
-                logo = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=200",
-                category = "News & Business",
+                logo = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=300",
+                category = "News",
                 kind = StreamKind.LIVE,
-                currentProgram = "Eye on Africa & Europe",
-                nextProgram = "Culture Matters",
+                currentProgram = "World Panorama",
+                nextProgram = "Inside the Culture",
                 programProgress = 0.40f
             ),
             Channel(
-                id = "c_redbull",
-                name = "Red Bull TV",
-                streamUrl = "https://rbmn-live.akamaized.net/hls/live/590964/BoRB-AT/master.m3u8",
-                logo = "https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=200",
-                category = "Sports & Action",
-                kind = StreamKind.LIVE,
-                currentProgram = "Cliff Diving World Series",
-                nextProgram = "Rampage Mountain Biking",
-                programProgress = 0.55f
-            ),
-            Channel(
                 id = "c_euronews",
-                name = "Euronews World",
+                name = "Euronews Now",
                 streamUrl = "https://euronews-euronews-world-1-eu.plex.tv/live/master.m3u8",
-                logo = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=200",
-                category = "News & Business",
+                logo = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=300",
+                category = "News",
                 kind = StreamKind.LIVE,
-                currentProgram = "European Headlines & Analysis",
-                nextProgram = "Smart Health",
+                currentProgram = "Brussels Dispatch",
+                nextProgram = "Global Business",
                 programProgress = 0.20f
-            ),
-            Channel(
-                id = "c_nature",
-                name = "Wild Nature 4K",
-                streamUrl = "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8",
-                logo = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=200",
-                category = "Documentary & Nature",
-                kind = StreamKind.LIVE,
-                currentProgram = "Big Cat Sanctuary Expedition",
-                nextProgram = "Oceans Deep Unknown",
-                programProgress = 0.70f
-            ),
-            Channel(
-                id = "c_cinema",
-                name = "Classic Cinema HD",
-                streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                logo = "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=200",
-                category = "Movies & Cinema",
-                kind = StreamKind.LIVE,
-                currentProgram = "Animation Classics: Bunny & Friends",
-                nextProgram = "Golden Age Feature",
-                programProgress = 0.15f
             )
         )
 
@@ -193,123 +194,151 @@ class PlaylistRepository(private val context: Context) {
                 id = "vod_1",
                 title = "Big Buck Bunny (4K Ultra HD)",
                 streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                poster = "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=400",
-                backdrop = "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=800",
-                category = "Animation",
-                rating = "8.9",
+                poster = "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=500",
+                backdrop = "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=1200",
+                category = "Action & Adventure",
+                rating = "98% Match",
                 year = "2024",
                 duration = "10m",
-                description = "A large and lovable rabbit deals with bully forest creatures in this groundbreaking open movie.",
-                cast = "Blender Open Project Team"
+                description = "When a lovable giant rabbit is pushed to his limits by mischievous woodland bullies, he devises an ingenious forest defense mechanism.",
+                cast = "Blender Open Creative Studio"
             ),
             VodItem(
                 id = "vod_2",
-                title = "Tears of Steel (Sci-Fi Cyberpunk)",
+                title = "Tears of Steel",
                 streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
-                poster = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400",
-                backdrop = "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=800",
-                category = "Sci-Fi",
-                rating = "8.6",
-                year = "2023",
+                poster = "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=500",
+                backdrop = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200",
+                category = "Sci-Fi & Cyberpunk",
+                rating = "95% Match",
+                year = "2024",
                 duration = "12m",
-                description = "Set in a dystopian future Amsterdam, a group of scientists attempts to stage an emotional reconnection to prevent destruction.",
+                description = "In a dystopian cyberpunk Amsterdam, scientists stage an emotional reconnection in an old rocket launcher to avert an alien robot cataclysm.",
                 cast = "Derek de Lint, Sergio Hasselbaink, Denise Rebergen"
             ),
             VodItem(
                 id = "vod_3",
-                title = "Sintel (Fantasy Adventure)",
+                title = "Sintel: Dragon's Dawn",
                 streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
-                poster = "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400",
-                backdrop = "https://images.unsplash.com/photo-1514565131-fce0801e5785?w=800",
+                poster = "https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=500",
+                backdrop = "https://images.unsplash.com/photo-1514565131-fce0801e5785?w=1200",
                 category = "Fantasy",
-                rating = "9.1",
+                rating = "99% Match",
                 year = "2024",
                 duration = "15m",
-                description = "A lonely young woman attacks an arid wasteland in pursuit of a baby dragon she befriended and nursed back to health.",
+                description = "A determined lone warrior journeys across scorching desert wastelands and frozen mountain peaks to rescue her baby dragon companion.",
                 cast = "Halina Reijn, Thom Hoffman"
             ),
             VodItem(
                 id = "vod_4",
                 title = "Elephants Dream",
                 streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
-                poster = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400",
-                backdrop = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=800",
-                category = "Sci-Fi",
-                rating = "8.2",
-                year = "2022",
+                poster = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=500",
+                backdrop = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1200",
+                category = "Sci-Fi & Cyberpunk",
+                rating = "91% Match",
+                year = "2023",
                 duration = "11m",
-                description = "Proog and Emo navigate an enigmatic, cavernous machine complex that seems driven by psychic manifestations.",
+                description = "Two wanderers venture through the endless recursive chambers of a gargantuan psychic biomechanical labyrinth.",
                 cast = "Tygo Gernandt, Cas Jansen"
             ),
             VodItem(
                 id = "vod_5",
-                title = "Cosmos Laundromat (First Cycle)",
+                title = "Cosmos Laundromat",
                 streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
-                poster = "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?w=400",
-                backdrop = "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=800",
-                category = "Drama",
-                rating = "8.8",
+                poster = "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?w=500",
+                backdrop = "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=1200",
+                category = "Dramas",
+                rating = "93% Match",
                 year = "2024",
                 duration = "13m",
-                description = "On a desolate island, a despondent sheep named Franck meets a quirky salesman who offers him the adventure of multiple lifetimes.",
-                cast = "Pierre Bokma, Reinout Scholten van Aschat"
+                description = "On a windswept desolate cliffside, an existential sheep is given a mysterious token that grants him parallel lives across space and time.",
+                cast = "Pierre Bokma, Reinout Scholten"
             )
         )
 
         val defaultSeries = listOf(
             SeriesItem(
                 id = "ser_1",
-                title = "Chronicles of the Universe",
-                poster = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400",
-                category = "Sci-Fi Documentary",
-                rating = "9.4",
+                title = "Cosmic Odyssey",
+                poster = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=500",
+                category = "Sci-Fi & Fantasy",
+                rating = "99% Match",
                 year = "2024",
-                seasonsCount = 2,
-                description = "A deep journey through cosmic structures, black holes, and the future of interstellar humanity.",
+                seasonsCount = 3,
+                description = "An exhilarating deep dive into gravitational waves, supermassive black holes, and the future of human exploration beyond the solar system.",
                 episodes = listOf(
                     EpisodeItem(
                         id = "ep_1_1",
                         seasonNumber = 1,
                         episodeNumber = 1,
-                        title = "Birth of Stellar Nurseries",
+                        title = "Ignition of Stellar Nurseries",
                         duration = "45m",
                         streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
-                        thumbnail = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=300",
-                        synopsis = "How massive nebulae collapse to ignite new star systems."
+                        thumbnail = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400",
+                        synopsis = "How massive nebulae collapse to spark the birth of planetary systems."
                     ),
                     EpisodeItem(
                         id = "ep_1_2",
                         seasonNumber = 1,
                         episodeNumber = 2,
-                        title = "The Quantum Horizon",
+                        title = "Singularity Event",
                         duration = "48m",
                         streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
-                        thumbnail = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300",
-                        synopsis = "Observing events near supermassive black holes."
+                        thumbnail = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400",
+                        synopsis = "Telescopes capture real-time time-dilation ripples near an active galactic nucleus."
                     )
                 )
             ),
             SeriesItem(
                 id = "ser_2",
-                title = "Wild Horizons",
-                poster = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400",
-                category = "Nature",
-                rating = "9.2",
-                year = "2023",
-                seasonsCount = 1,
-                description = "Breathtaking cinematography across the most remote landscapes on Earth.",
+                title = "Earth: Wild Expeditions",
+                poster = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=500",
+                category = "Documentaries",
+                rating = "97% Match",
+                year = "2024",
+                seasonsCount = 2,
+                description = "Unprecedented high-speed 4K cinematography chronicling earth's most resilient predator and prey ecosystems.",
                 episodes = listOf(
                     EpisodeItem(
                         id = "ep_2_1",
                         seasonNumber = 1,
                         episodeNumber = 1,
-                        title = "The Frozen Tundra",
+                        title = "Frozen Taiga Survival",
                         duration = "52m",
                         streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
-                        thumbnail = "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=300",
-                        synopsis = "Wildlife surviving in extreme sub-zero conditions."
+                        thumbnail = "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400",
+                        synopsis = "Wolves and snow leopards adapt to prolonged sub-zero conditions."
                     )
                 )
+            )
+        )
+
+        val defaultContinue = listOf(
+            ContinueWatchingItem(
+                id = "cw_1",
+                title = "Big Buck Bunny (4K)",
+                streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                poster = "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=400",
+                progressFraction = 0.62f,
+                lastPositionMs = 380000L
+            ),
+            ContinueWatchingItem(
+                id = "cw_2",
+                title = "NASA TV 4K",
+                streamUrl = "https://ntv1.akamaized.net/hls/live/2014075/NASA-NTV1-HLS/master.m3u8",
+                poster = "https://images.unsplash.com/photo-1614728894747-a83421e2b9c9?w=400",
+                progressFraction = 0.88f,
+                lastPositionMs = 0L,
+                isLive = true
+            ),
+            ContinueWatchingItem(
+                id = "cw_3",
+                title = "Tears of Steel",
+                streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+                poster = "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400",
+                progressFraction = 0.35f,
+                lastPositionMs = 240000L
             )
         )
 
@@ -318,12 +347,13 @@ class PlaylistRepository(private val context: Context) {
         }
         _vodItems.value = defaultVod
         _seriesItems.value = defaultSeries
+        _continueWatching.value = defaultContinue
 
         if (_playlists.value.isEmpty()) {
             _playlists.value = listOf(
                 PlaylistItem(
                     id = "pl_default",
-                    name = "ONE Demo Fast Streams",
+                    name = "ONE Demo Global Streams",
                     type = "M3U",
                     url = "Built-in Showcase",
                     channelCount = defaultChannels.size,
@@ -343,18 +373,55 @@ class PlaylistRepository(private val context: Context) {
         _favorites.value = current
         prefs.edit().putStringSet("favorite_channels", current).apply()
 
-        // Update channel list favorite state
         _channels.value = _channels.value.map {
             if (it.id == channelId) it.copy(isFavorite = current.contains(channelId)) else it
         }
     }
 
+    fun updateContinueWatching(title: String, url: String, poster: String, progress: Float, positionMs: Long, isLive: Boolean) {
+        val current = _continueWatching.value.toMutableList()
+        current.removeAll { it.streamUrl == url }
+        current.add(
+            0,
+            ContinueWatchingItem(
+                id = UUID.randomUUID().toString(),
+                title = title,
+                streamUrl = url,
+                poster = poster.ifEmpty { "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=400" },
+                progressFraction = progress.coerceIn(0.05f, 0.98f),
+                lastPositionMs = positionMs,
+                isLive = isLive
+            )
+        )
+        _continueWatching.value = current.take(10)
+    }
+
     suspend fun addM3uPlaylist(name: String, url: String): Pair<Boolean, String> = withContext(Dispatchers.IO) {
+        val currentUa = userAgentManager.currentUserAgent.value
+        _parsingProgress.value = "Connecting to server (Timeout: 180s)..."
+
         try {
-            val content = XtreamClient.httpGet(url)
-            val result = M3uParser.parse(content, url)
+            // Extended 60s connect / 180s read timeout
+            val content = XtreamClient.httpGet(
+                urlStr = url,
+                userAgent = currentUa,
+                connectTimeoutMs = 60000,
+                readTimeoutMs = 180000
+            )
+
+            _parsingProgress.value = "Parsing channels & streams..."
+            val result = M3uParser.parse(
+                content = content,
+                sourceUrl = url,
+                maxLimit = 100000,
+                onProgress = { count ->
+                    _parsingProgress.value = "Parsed $count channels..."
+                }
+            )
+
             if (result.channels.isEmpty()) {
-                return@withContext Pair(false, "No channels found in M3U playlist")
+                _parsingProgress.value = null
+                return@withContext Pair(false, "No valid streams found in playlist. Check URL or User-Agent.")
             }
 
             val newChannels = result.channels.map {
@@ -387,16 +454,30 @@ class PlaylistRepository(private val context: Context) {
             _playlists.value = updatedPlaylists
             savePlaylistsToDisk(updatedPlaylists)
 
-            Pair(true, "Added ${newChannels.size} channels successfully")
+            _parsingProgress.value = null
+            Pair(true, "Successfully loaded all ${newChannels.size} streams!")
         } catch (e: Exception) {
-            Pair(false, "Error: ${e.localizedMessage ?: "Failed to download playlist"}")
+            _parsingProgress.value = null
+            Pair(false, "Connection error: ${e.localizedMessage ?: "Failed to download playlist"}")
         }
     }
 
     suspend fun addXtreamAccount(name: String, server: String, u: String, p: String): Pair<Boolean, String> {
+        val currentUa = userAgentManager.currentUserAgent.value
+        _parsingProgress.value = "Authenticating with Xtream Codes API..."
+
         val importResult = XtreamClient.fetchAccount(
-            XtreamClient.Account(server, u, p)
+            account = XtreamClient.Account(server, u, p),
+            userAgent = currentUa,
+            maxLive = 50000,
+            maxVod = 25000,
+            maxSeries = 10000,
+            onProgress = { count ->
+                _parsingProgress.value = "Loaded $count streams..."
+            }
         )
+
+        _parsingProgress.value = null
         if (!importResult.success) {
             return Pair(false, importResult.message)
         }
@@ -458,10 +539,10 @@ class PlaylistRepository(private val context: Context) {
                 isCurrent = false
             ),
             EpgProgram(
-                title = "${channel.name} Late Night Focus",
+                title = "${channel.name} Late Night Special",
                 startTime = "21:00",
                 endTime = "23:00",
-                description = "Nightly summary, highlights, and international round-up.",
+                description = "Nightly summary, international highlights, and analysis.",
                 isCurrent = false
             )
         )
