@@ -36,7 +36,7 @@ object M3uParser {
     fun parse(
         content: String,
         sourceUrl: String = "",
-        maxLimit: Int = 100000,
+        maxLimit: Int = 250000,
         onProgress: ((Int) -> Unit)? = null
     ): Result {
         return parseStream(
@@ -51,7 +51,7 @@ object M3uParser {
         inputStream: InputStream,
         isGzip: Boolean = false,
         sourceUrl: String = "",
-        maxLimit: Int = 100000,
+        maxLimit: Int = 250000,
         onProgress: ((Int) -> Unit)? = null
     ): Result {
         val stream = if (isGzip) GZIPInputStream(inputStream) else inputStream
@@ -71,10 +71,10 @@ object M3uParser {
     fun parseStream(
         reader: BufferedReader,
         sourceUrl: String = "",
-        maxLimit: Int = 100000,
+        maxLimit: Int = 250000,
         onProgress: ((Int) -> Unit)? = null
     ): Result {
-        val channels = ArrayList<Entry>(2048)
+        val channels = ArrayList<Entry>(8192)
         var line: String?
         var currentTvgName = ""
         var currentGroup = "General"
@@ -108,7 +108,7 @@ object M3uParser {
                 val streamUrl = resolveUrl(trimmed, sourceUrl)
                 if (isStreamUrl(streamUrl) || trimmed.contains("://")) {
                     val finalName = currentTvgName.ifEmpty { guessNameFromUrl(streamUrl) }
-                    val kind = detectKind(currentGroup, streamUrl)
+                    val kind = detectKind(currentGroup, streamUrl, finalName)
 
                     channels.add(
                         Entry(
@@ -121,7 +121,7 @@ object M3uParser {
                         )
                     )
                     count++
-                    if (count % 250 == 0) {
+                    if (count % 500 == 0) {
                         onProgress?.invoke(count)
                     }
 
@@ -140,16 +140,46 @@ object M3uParser {
         return Result(channels = channels, isMaster = isMasterHls, total = channels.size)
     }
 
-    private fun detectKind(group: String, url: String): Kind {
+    private fun detectKind(group: String, url: String, name: String = ""): Kind {
         val gLower = group.lowercase()
         val uLower = url.lowercase()
-        return when {
-            gLower.contains("movie") || gLower.contains("vod") || gLower.contains("cinema") ||
-                    uLower.contains("/movie/") || uLower.endsWith(".mp4") || uLower.endsWith(".mkv") -> Kind.VOD
-            gLower.contains("series") || gLower.contains("show") || gLower.contains("season") ||
-                    uLower.contains("/series/") -> Kind.SERIES
-            else -> Kind.LIVE
+        val nLower = name.lowercase()
+
+        // 1. URL Path conventions (most accurate for Xtream & IPTV)
+        if (uLower.contains("/series/")) return Kind.SERIES
+        if (uLower.contains("/movie/")) return Kind.VOD
+        if (uLower.contains("/live/")) return Kind.LIVE
+
+        // 2. File extensions (VOD files like .mp4, .mkv, .avi)
+        if (uLower.endsWith(".mp4") || uLower.endsWith(".mkv") || uLower.endsWith(".avi")) {
+            // Check if it has episode pattern S01E01
+            if (Regex("""(?i)[sS]\d{1,2}\s*[eE]\d{1,3}""").containsMatchIn(nLower) ||
+                gLower.contains("series") || gLower.contains("serial")
+            ) {
+                return Kind.SERIES
+            }
+            return Kind.VOD
         }
+
+        // 3. Category & Group names
+        if (gLower.contains("series") || gLower.contains("serial") || gLower.contains("shows") ||
+            gLower.contains("season") || gLower.contains("episoade")
+        ) {
+            return Kind.SERIES
+        }
+
+        if (gLower.contains("movie") || gLower.contains("vod") || gLower.contains("cinema") ||
+            gLower.contains("film") || gLower.contains("filme") || gLower.contains("pelicula")
+        ) {
+            return Kind.VOD
+        }
+
+        // 4. Name patterns (e.g. "Breaking Bad S01 E01")
+        if (Regex("""(?i)[sS]\d{1,2}\s*[eE]\d{1,3}""").containsMatchIn(nLower)) {
+            return Kind.SERIES
+        }
+
+        return Kind.LIVE
     }
 
     // High performance attribute extraction without regex

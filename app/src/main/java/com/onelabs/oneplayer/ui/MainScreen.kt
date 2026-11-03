@@ -37,7 +37,7 @@ enum class OneNavTab(val label: String, val icon: ImageVector) {
     HOME("Home", Icons.Default.Home),
     LIVE_TV("Live TV", Icons.Default.LiveTv),
     MOVIES("Movies", Icons.Default.Movie),
-    PLAYLISTS("Playlists", Icons.Default.PlaylistPlay),
+    SERIES("Series", Icons.Default.VideoLibrary),
     MY_ACCOUNT("My ONE", Icons.Default.Person)
 }
 
@@ -58,6 +58,7 @@ fun MainScreen(
     var currentTab by remember { mutableStateOf(OneNavTab.HOME) }
     var activePlayback by remember { mutableStateOf<ActivePlayback?>(null) }
     var showProfilesDialog by remember { mutableStateOf(false) }
+    var showPlaylistsDialog by remember { mutableStateOf(false) }
 
     val licenseStatus by licenseManager.licenseStatus.collectAsState()
     val activeProfile by repository.activeProfile.collectAsState()
@@ -129,6 +130,18 @@ fun MainScreen(
                                     fontWeight = FontWeight.Bold
                                 )
                             }
+                        }
+
+                        // Playlists Quick Access
+                        IconButton(
+                            onClick = { showPlaylistsDialog = true },
+                            modifier = Modifier.padding(end = 4.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.PlaylistPlay,
+                                contentDescription = "Playlists & Accounts",
+                                tint = Color.White
+                            )
                         }
 
                         // Profile Avatar
@@ -231,7 +244,8 @@ fun MainScreen(
                         )
                     },
                     onOpenLiveTv = { currentTab = OneNavTab.LIVE_TV },
-                    onOpenMovies = { currentTab = OneNavTab.MOVIES }
+                    onOpenMovies = { currentTab = OneNavTab.MOVIES },
+                    onOpenSeries = { currentTab = OneNavTab.SERIES }
                 )
                 OneNavTab.LIVE_TV -> LiveTvScreen(
                     repository = repository,
@@ -257,8 +271,17 @@ fun MainScreen(
                         )
                     }
                 )
-                OneNavTab.PLAYLISTS -> PlaylistsScreen(
-                    repository = repository
+                OneNavTab.SERIES -> SeriesScreen(
+                    repository = repository,
+                    onPlayEpisode = { ep: EpisodeItem, series: SeriesItem ->
+                        activePlayback = ActivePlayback(
+                            url = ep.streamUrl,
+                            title = "${series.title} - S${ep.seasonNumber}E${ep.episodeNumber}: ${ep.title}",
+                            category = series.category,
+                            isLive = false,
+                            poster = series.poster.ifEmpty { ep.thumbnail }
+                        )
+                    }
                 )
                 OneNavTab.MY_ACCOUNT -> MyAccountScreen(
                     licenseManager = licenseManager,
@@ -302,6 +325,19 @@ fun MainScreen(
             ProfilesScreen(repository = repository)
         }
     }
+
+    // Playlists Bottom Sheet Modal
+    if (showPlaylistsDialog) {
+        ModalBottomSheet(
+            onDismissRequest = { showPlaylistsDialog = false },
+            containerColor = OneBlack
+        ) {
+            PlaylistsScreen(
+                repository = repository,
+                onClose = { showPlaylistsDialog = false }
+            )
+        }
+    }
 }
 
 @Composable
@@ -324,18 +360,24 @@ fun MyAccountScreen(
             Tab(
                 selected = selectedSubTab == 0,
                 onClick = { selectedSubTab = 0 },
-                text = { Text("Device Pairing & Trial", fontWeight = FontWeight.Bold) }
+                text = { Text("Device Pairing", fontWeight = FontWeight.Bold, fontSize = 12.sp) }
             )
             Tab(
                 selected = selectedSubTab == 1,
                 onClick = { selectedSubTab = 1 },
-                text = { Text("Diagnostics & Speed", fontWeight = FontWeight.Bold) }
+                text = { Text("Playlists & M3U", fontWeight = FontWeight.Bold, fontSize = 12.sp) }
+            )
+            Tab(
+                selected = selectedSubTab == 2,
+                onClick = { selectedSubTab = 2 },
+                text = { Text("Diagnostics", fontWeight = FontWeight.Bold, fontSize = 12.sp) }
             )
         }
 
         when (selectedSubTab) {
             0 -> DevicePairingScreen(licenseManager = licenseManager)
-            1 -> DiagnosticsScreen()
+            1 -> PlaylistsScreen(repository = repository)
+            2 -> DiagnosticsScreen()
         }
     }
 }

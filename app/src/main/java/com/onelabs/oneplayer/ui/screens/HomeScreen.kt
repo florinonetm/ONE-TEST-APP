@@ -40,7 +40,8 @@ fun HomeScreen(
     onPlayVod: (VodItem) -> Unit,
     onPlaySeries: (EpisodeItem, SeriesItem) -> Unit,
     onOpenLiveTv: () -> Unit,
-    onOpenMovies: () -> Unit
+    onOpenMovies: () -> Unit,
+    onOpenSeries: () -> Unit = {}
 ) {
     val channels by repository.channels.collectAsState()
     val vodList by repository.vodItems.collectAsState()
@@ -257,7 +258,7 @@ fun HomeScreen(
         // Row 4: Critically Acclaimed TV Series
         if (seriesList.isNotEmpty()) {
             item {
-                SectionHeader("Binge-Worthy TV Series")
+                SectionHeader("Binge-Worthy TV Series", onSeeAll = onOpenSeries)
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     horizontalArrangement = Arrangement.spacedBy(10.dp)

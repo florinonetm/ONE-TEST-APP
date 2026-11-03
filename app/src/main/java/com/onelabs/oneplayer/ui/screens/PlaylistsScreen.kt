@@ -25,7 +25,8 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun PlaylistsScreen(
-    repository: PlaylistRepository
+    repository: PlaylistRepository,
+    onClose: (() -> Unit)? = null
 ) {
     val coroutineScope = rememberCoroutineScope()
     val playlists by repository.playlists.collectAsState()
@@ -43,6 +44,25 @@ fun PlaylistsScreen(
             .background(OneBlack)
             .padding(16.dp)
     ) {
+        if (onClose != null) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Playlists & Accounts",
+                    color = Color.White,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                IconButton(onClick = onClose) {
+                    Icon(Icons.Default.Close, contentDescription = "Close", tint = Color.White)
+                }
+            }
+        }
         // User-Agent & Timeout Settings Card
         Card(
             colors = CardDefaults.cardColors(containerColor = OneCardSurface),
@@ -263,9 +283,36 @@ fun PlaylistsScreen(
                             Text(pl.name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
                             val subtitle = if (pl.type == "XTREAM") pl.server else pl.url
                             Text(subtitle, color = TextGray, fontSize = 12.sp, maxLines = 1)
-                            Text("${pl.channelCount} Streams Loaded · Updated: ${pl.lastUpdated}", color = TextGrayDark, fontSize = 11.sp)
+                            if (pl.breakdown.isNotEmpty()) {
+                                Text(
+                                    "${pl.channelCount} items (${pl.breakdown})",
+                                    color = OneGreen,
+                                    fontSize = 11.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            } else {
+                                Text("${pl.channelCount} Streams Loaded · Updated: ${pl.lastUpdated}", color = TextGrayDark, fontSize = 11.sp)
+                            }
                         }
 
+                        IconButton(
+                            onClick = {
+                                coroutineScope.launch {
+                                    val res = repository.reloadPlaylist(pl)
+                                    importStatusMessage = res.second
+                                }
+                            },
+                            modifier = Modifier.size(36.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Refresh,
+                                contentDescription = "Reload Full Catalog",
+                                tint = OneRed,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(4.dp))
                         Icon(Icons.Default.CheckCircle, contentDescription = "Active", tint = OneGreen, modifier = Modifier.size(20.dp))
                     }
                 }

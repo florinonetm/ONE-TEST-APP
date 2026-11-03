@@ -69,7 +69,9 @@ data class PlaylistItem(
     val url: String = "",
     val server: String = "",
     val username: String = "",
+    val password: String = "",
     val channelCount: Int = 0,
+    val breakdown: String = "",
     val lastUpdated: String = "",
     val isActive: Boolean = true
 )

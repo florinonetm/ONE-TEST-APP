@@ -96,7 +96,9 @@ class PlaylistRepository(
                             url = obj.optString("url"),
                             server = obj.optString("server"),
                             username = obj.optString("username"),
+                            password = obj.optString("password"),
                             channelCount = obj.optInt("channelCount"),
+                            breakdown = obj.optString("breakdown"),
                             lastUpdated = obj.optString("lastUpdated")
                         )
                     )
@@ -269,7 +271,7 @@ class PlaylistRepository(
                 description = "An exhilarating deep dive into gravitational waves, supermassive black holes, and the future of human exploration beyond the solar system.",
                 episodes = listOf(
                     EpisodeItem(
-                        id = "ep_1_1",
+                        id = "ep_1_1_1",
                         seasonNumber = 1,
                         episodeNumber = 1,
                         title = "Ignition of Stellar Nurseries",
@@ -279,7 +281,7 @@ class PlaylistRepository(
                         synopsis = "How massive nebulae collapse to spark the birth of planetary systems."
                     ),
                     EpisodeItem(
-                        id = "ep_1_2",
+                        id = "ep_1_1_2",
                         seasonNumber = 1,
                         episodeNumber = 2,
                         title = "Singularity Event",
@@ -287,6 +289,36 @@ class PlaylistRepository(
                         streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
                         thumbnail = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400",
                         synopsis = "Telescopes capture real-time time-dilation ripples near an active galactic nucleus."
+                    ),
+                    EpisodeItem(
+                        id = "ep_1_1_3",
+                        seasonNumber = 1,
+                        episodeNumber = 3,
+                        title = "The Quantum Jump",
+                        duration = "50m",
+                        streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                        thumbnail = "https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400",
+                        synopsis = "Experimental warp mechanics tested in deep space outer Lagrangian orbit."
+                    ),
+                    EpisodeItem(
+                        id = "ep_1_2_1",
+                        seasonNumber = 2,
+                        episodeNumber = 1,
+                        title = "Echoes of the Void",
+                        duration = "46m",
+                        streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
+                        thumbnail = "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400",
+                        synopsis = "The crew decodes an ancient synthetic repeating beacon from Andromeda."
+                    ),
+                    EpisodeItem(
+                        id = "ep_1_2_2",
+                        seasonNumber = 2,
+                        episodeNumber = 2,
+                        title = "Event Horizon Colony",
+                        duration = "52m",
+                        streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",
+                        thumbnail = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400",
+                        synopsis = "Life and politics inside the humanity's first relativistic ring station."
                     )
                 )
             ),
@@ -301,7 +333,7 @@ class PlaylistRepository(
                 description = "Unprecedented high-speed 4K cinematography chronicling earth's most resilient predator and prey ecosystems.",
                 episodes = listOf(
                     EpisodeItem(
-                        id = "ep_2_1",
+                        id = "ep_2_1_1",
                         seasonNumber = 1,
                         episodeNumber = 1,
                         title = "Frozen Taiga Survival",
@@ -309,6 +341,154 @@ class PlaylistRepository(
                         streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
                         thumbnail = "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400",
                         synopsis = "Wolves and snow leopards adapt to prolonged sub-zero conditions."
+                    ),
+                    EpisodeItem(
+                        id = "ep_2_1_2",
+                        seasonNumber = 1,
+                        episodeNumber = 2,
+                        title = "Amazonian Canopy Secrets",
+                        duration = "49m",
+                        streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+                        thumbnail = "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400",
+                        synopsis = "Rare nocturnal bioluminescent creatures revealed in unmapped rainforests."
+                    ),
+                    EpisodeItem(
+                        id = "ep_2_2_1",
+                        seasonNumber = 2,
+                        episodeNumber = 1,
+                        title = "The Abyssal Trench",
+                        duration = "54m",
+                        streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+                        thumbnail = "https://images.unsplash.com/photo-1544551763-46a013bb70d5?w=400",
+                        synopsis = "Submersible probes dive into 11,000 meters of complete oceanic darkness."
+                    )
+                )
+            ),
+            SeriesItem(
+                id = "ser_3",
+                title = "Cyberpunk: Neon City",
+                poster = "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=500",
+                category = "Action & Thriller",
+                rating = "98% Match",
+                year = "2024",
+                seasonsCount = 2,
+                description = "In a hyper-connected mega-metropolis ruled by tech conglomerates, an augmented mercenary uncovers a rogue AI conspiracy.",
+                episodes = listOf(
+                    EpisodeItem(
+                        id = "ep_3_1_1",
+                        seasonNumber = 1,
+                        episodeNumber = 1,
+                        title = "Grid Protocol Reboot",
+                        duration = "44m",
+                        streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+                        thumbnail = "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400",
+                        synopsis = "A memory heist goes wrong in the subterranean lower sectors."
+                    ),
+                    EpisodeItem(
+                        id = "ep_3_1_2",
+                        seasonNumber = 1,
+                        episodeNumber = 2,
+                        title = "Chrome & Shadows",
+                        duration = "47m",
+                        streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
+                        thumbnail = "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=400",
+                        synopsis = "An underground syndicate delivers an ultimatum to the defense grid."
+                    )
+                )
+            ),
+            SeriesItem(
+                id = "ser_4",
+                title = "Shadows of Bucharest",
+                poster = "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=500",
+                category = "Crime & Mystery",
+                rating = "96% Match",
+                year = "2023",
+                seasonsCount = 3,
+                description = "A seasoned detective and a cyber forensic investigator unravel interconnected corruption and clandestine art heists.",
+                episodes = listOf(
+                    EpisodeItem(
+                        id = "ep_4_1_1",
+                        seasonNumber = 1,
+                        episodeNumber = 1,
+                        title = "Midnight at Lipscani",
+                        duration = "50m",
+                        streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+                        thumbnail = "https://images.unsplash.com/photo-1517457373958-b7bdd4587205?w=400",
+                        synopsis = "A priceless museum artifact vanishes during a blackout in the Old Town."
+                    ),
+                    EpisodeItem(
+                        id = "ep_4_1_2",
+                        seasonNumber = 1,
+                        episodeNumber = 2,
+                        title = "The Archival Cipher",
+                        duration = "53m",
+                        streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                        thumbnail = "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?w=400",
+                        synopsis = "Encrypted ledger documents reveal an international trafficking ring."
+                    )
+                )
+            ),
+            SeriesItem(
+                id = "ser_5",
+                title = "The Last Frontier",
+                poster = "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=500",
+                category = "Adventure",
+                rating = "95% Match",
+                year = "2024",
+                seasonsCount = 2,
+                description = "Isolated mountaineering rescue teams risk everything traversing treacherous peaks in the world's most unforgiving alpine ranges.",
+                episodes = listOf(
+                    EpisodeItem(
+                        id = "ep_5_1_1",
+                        seasonNumber = 1,
+                        episodeNumber = 1,
+                        title = "Whiteout Avalanche",
+                        duration = "48m",
+                        streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+                        thumbnail = "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=400",
+                        synopsis = "A sudden blizzard traps an expedition near the K2 summit ridge."
+                    ),
+                    EpisodeItem(
+                        id = "ep_5_1_2",
+                        seasonNumber = 1,
+                        episodeNumber = 2,
+                        title = "Glacier Chasm Rescue",
+                        duration = "51m",
+                        streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
+                        thumbnail = "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400",
+                        synopsis = "High-altitude helicopters attempt an impossible crevasse extraction."
+                    )
+                )
+            ),
+            SeriesItem(
+                id = "ser_6",
+                title = "Silicon Valley Chronicles",
+                poster = "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=500",
+                category = "Comedy & Tech",
+                rating = "94% Match",
+                year = "2024",
+                seasonsCount = 3,
+                description = "A sharp, witty satire following five quirky engineers building an open-source decentralized computing protocol from a garage.",
+                episodes = listOf(
+                    EpisodeItem(
+                        id = "ep_6_1_1",
+                        seasonNumber = 1,
+                        episodeNumber = 1,
+                        title = "Hello, World! (And Goodbye Sleep)",
+                        duration = "32m",
+                        streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4",
+                        thumbnail = "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=400",
+                        synopsis = "The team burns through 48 hours of energy drinks pitching to seed investors."
+                    ),
+                    EpisodeItem(
+                        id = "ep_6_1_2",
+                        seasonNumber = 1,
+                        episodeNumber = 2,
+                        title = "Merge Conflict Chaos",
+                        duration = "34m",
+                        streamUrl = "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",
+                        thumbnail = "https://images.unsplash.com/photo-1504711434969-e33886168f5c?w=400",
+                        synopsis = "An accidental force-push deletes the production database three hours before demo day."
                     )
                 )
             )
@@ -398,64 +578,81 @@ class PlaylistRepository(
 
     suspend fun addM3uPlaylist(name: String, url: String): Pair<Boolean, String> = withContext(Dispatchers.IO) {
         val currentUa = userAgentManager.currentUserAgent.value
-        _parsingProgress.value = "Connecting to server (Timeout: 180s)..."
+        _parsingProgress.value = "Connecting to server (Timeout: 300s)..."
 
         try {
-            // Extended 60s connect / 180s read timeout
-            val content = XtreamClient.httpGet(
+            XtreamClient.openHttpStream(
                 urlStr = url,
                 userAgent = currentUa,
                 connectTimeoutMs = 60000,
-                readTimeoutMs = 180000
-            )
-
-            _parsingProgress.value = "Parsing channels & streams..."
-            val result = M3uParser.parse(
-                content = content,
-                sourceUrl = url,
-                maxLimit = 100000,
-                onProgress = { count ->
-                    _parsingProgress.value = "Parsed $count channels..."
-                }
-            )
-
-            if (result.channels.isEmpty()) {
-                _parsingProgress.value = null
-                return@withContext Pair(false, "No valid streams found in playlist. Check URL or User-Agent.")
-            }
-
-            val newChannels = result.channels.map {
-                Channel(
-                    id = UUID.randomUUID().toString(),
-                    name = it.name,
-                    streamUrl = it.url,
-                    logo = it.logo,
-                    category = it.group,
-                    kind = when (it.kind) {
-                        M3uParser.Kind.LIVE -> StreamKind.LIVE
-                        M3uParser.Kind.VOD -> StreamKind.VOD
-                        M3uParser.Kind.SERIES -> StreamKind.SERIES
+                readTimeoutMs = 300000
+            ).use { resp ->
+                _parsingProgress.value = "Streaming & parsing channels (up to 250,000)..."
+                val result = M3uParser.parseFromInputStream(
+                    inputStream = resp.stream,
+                    isGzip = resp.isGzip,
+                    sourceUrl = url,
+                    maxLimit = 250000,
+                    onProgress = { count ->
+                        _parsingProgress.value = "Parsed $count streams..."
                     }
                 )
+
+                if (result.channels.isEmpty()) {
+                    _parsingProgress.value = null
+                    return@withContext Pair(false, "No valid streams found in playlist. Check URL or User-Agent.")
+                }
+
+                val newChannels = result.channels.mapIndexed { idx, it ->
+                    Channel(
+                        id = "m3u_${it.url.hashCode()}_$idx",
+                        name = it.name,
+                        streamUrl = it.url,
+                        logo = it.logo,
+                        category = it.group,
+                        kind = when (it.kind) {
+                            M3uParser.Kind.LIVE -> StreamKind.LIVE
+                            M3uParser.Kind.VOD -> StreamKind.VOD
+                            M3uParser.Kind.SERIES -> StreamKind.SERIES
+                        }
+                    )
+                }
+
+                val liveChannels = newChannels.filter { it.kind == StreamKind.LIVE }
+                _channels.value = _channels.value + (if (liveChannels.isNotEmpty()) liveChannels else newChannels)
+
+                val parsedVod = extractVodFromChannels(newChannels)
+                if (parsedVod.isNotEmpty()) {
+                    _vodItems.value = _vodItems.value + parsedVod
+                }
+
+                val parsedSeries = extractSeriesFromChannels(newChannels)
+                if (parsedSeries.isNotEmpty()) {
+                    _seriesItems.value = _seriesItems.value + parsedSeries
+                }
+
+                val liveCount = liveChannels.size
+                val vodCount = parsedVod.size
+                val seriesCount = parsedSeries.size
+                val breakdown = "$liveCount Live · $vodCount Movies · $seriesCount Series"
+
+                val newPlaylist = PlaylistItem(
+                    id = UUID.randomUUID().toString(),
+                    name = name.ifEmpty { "M3U Playlist" },
+                    type = "M3U",
+                    url = url,
+                    channelCount = newChannels.size,
+                    breakdown = breakdown,
+                    lastUpdated = "Just now"
+                )
+
+                val updatedPlaylists = _playlists.value + newPlaylist
+                _playlists.value = updatedPlaylists
+                savePlaylistsToDisk(updatedPlaylists)
+
+                _parsingProgress.value = null
+                Pair(true, "Successfully loaded all ${newChannels.size} items ($breakdown)")
             }
-
-            _channels.value = _channels.value + newChannels
-
-            val newPlaylist = PlaylistItem(
-                id = UUID.randomUUID().toString(),
-                name = name.ifEmpty { "M3U Playlist" },
-                type = "M3U",
-                url = url,
-                channelCount = newChannels.size,
-                lastUpdated = "Just now"
-            )
-
-            val updatedPlaylists = _playlists.value + newPlaylist
-            _playlists.value = updatedPlaylists
-            savePlaylistsToDisk(updatedPlaylists)
-
-            _parsingProgress.value = null
-            Pair(true, "Successfully loaded all ${newChannels.size} streams!")
         } catch (e: Exception) {
             _parsingProgress.value = null
             Pair(false, "Connection error: ${e.localizedMessage ?: "Failed to download playlist"}")
@@ -464,14 +661,12 @@ class PlaylistRepository(
 
     suspend fun addXtreamAccount(name: String, server: String, u: String, p: String): Pair<Boolean, String> {
         val currentUa = userAgentManager.currentUserAgent.value
-        _parsingProgress.value = "Authenticating with Xtream Codes API..."
+        _parsingProgress.value = "Connecting to Xtream Codes server (Catalog up to 250,000)..."
 
         val importResult = XtreamClient.fetchAccount(
             account = XtreamClient.Account(server, u, p),
             userAgent = currentUa,
-            maxLive = 50000,
-            maxVod = 25000,
-            maxSeries = 10000,
+            maxLimit = 250000,
             onProgress = { count ->
                 _parsingProgress.value = "Loaded $count streams..."
             }
@@ -482,15 +677,30 @@ class PlaylistRepository(
             return Pair(false, importResult.message)
         }
 
-        _channels.value = _channels.value + importResult.channels
+        val liveChannels = importResult.channels.filter { it.kind == StreamKind.LIVE }
+        _channels.value = _channels.value + (if (liveChannels.isNotEmpty()) liveChannels else importResult.channels)
+
+        val parsedVod = extractVodFromChannels(importResult.channels)
+        if (parsedVod.isNotEmpty()) {
+            _vodItems.value = _vodItems.value + parsedVod
+        }
+
+        val parsedSeries = extractSeriesFromChannels(importResult.channels)
+        if (parsedSeries.isNotEmpty()) {
+            _seriesItems.value = _seriesItems.value + parsedSeries
+        }
+
+        val breakdown = "${importResult.liveCount} Live · ${importResult.vodCount} Movies · ${importResult.seriesCount} Series"
 
         val newPlaylist = PlaylistItem(
             id = UUID.randomUUID().toString(),
-            name = name.ifEmpty { "Xtream ($server)" },
+            name = name.ifEmpty { "Xtream (${XtreamClient.normalizeServer(server)})" },
             type = "XTREAM",
             server = server,
             username = u,
+            password = p,
             channelCount = importResult.channels.size,
+            breakdown = breakdown,
             lastUpdated = "Just now"
         )
 
@@ -499,6 +709,114 @@ class PlaylistRepository(
         savePlaylistsToDisk(updatedPlaylists)
 
         return Pair(true, importResult.message)
+    }
+
+    suspend fun reloadPlaylist(playlist: PlaylistItem): Pair<Boolean, String> {
+        return if (playlist.type == "XTREAM") {
+            addXtreamAccount(playlist.name, playlist.server, playlist.username, playlist.password)
+        } else {
+            addM3uPlaylist(playlist.name, playlist.url)
+        }
+    }
+
+    private fun extractVodFromChannels(channels: List<Channel>): List<VodItem> {
+        val vodChannels = channels.filter { it.kind == StreamKind.VOD }
+        if (vodChannels.isEmpty()) return emptyList()
+
+        return vodChannels.mapIndexed { idx, ch ->
+            VodItem(
+                id = if (ch.id.isNotEmpty()) ch.id else "vod_${ch.streamUrl.hashCode()}_$idx",
+                title = ch.name,
+                poster = ch.logo.ifEmpty { "https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?w=500" },
+                backdrop = ch.logo.ifEmpty { "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=1000" },
+                category = ch.category.ifEmpty { "Movies" },
+                rating = "96% Match",
+                year = "2024",
+                duration = "Movie",
+                streamUrl = ch.streamUrl,
+                description = ch.currentProgram ?: "Stream Movie: ${ch.name}"
+            )
+        }
+    }
+
+    private fun extractSeriesFromChannels(channels: List<Channel>): List<SeriesItem> {
+        val seriesChannels = channels.filter { it.kind == StreamKind.SERIES }
+        if (seriesChannels.isEmpty()) return emptyList()
+
+        val seriesMap = mutableMapOf<String, MutableList<EpisodeItem>>()
+        val seriesMeta = mutableMapOf<String, Triple<String, String, String>>()
+        val seriesRegex = Regex("""(?i)(.*?)(?:\s*[-_]?\s*)[sS](\d+)\s*[eE](\d+)(?:[-:\s]*(.*))?""")
+
+        for (ch in seriesChannels) {
+            val match = seriesRegex.find(ch.name)
+            if (match != null) {
+                val seriesTitle = match.groupValues[1].trim().ifEmpty { ch.category }
+                val seasonNum = match.groupValues[2].toIntOrNull() ?: 1
+                val epNum = match.groupValues[3].toIntOrNull() ?: 1
+                val epTitle = match.groupValues[4].trim().ifEmpty { "Episode $epNum" }
+
+                val list = seriesMap.getOrPut(seriesTitle) { mutableListOf() }
+                list.add(
+                    EpisodeItem(
+                        id = ch.id,
+                        seasonNumber = seasonNum,
+                        episodeNumber = epNum,
+                        title = epTitle,
+                        duration = "45m",
+                        streamUrl = ch.streamUrl,
+                        thumbnail = ch.logo,
+                        synopsis = ch.currentProgram ?: "Episode $epNum of $seriesTitle"
+                    )
+                )
+                if (!seriesMeta.containsKey(seriesTitle)) {
+                    seriesMeta[seriesTitle] = Triple(ch.logo, ch.category, "Streamed series from playlist")
+                }
+            } else {
+                val seriesTitle = ch.name.substringBefore(" S0").substringBefore(" S1").trim()
+                val list = seriesMap.getOrPut(seriesTitle) { mutableListOf() }
+                list.add(
+                    EpisodeItem(
+                        id = ch.id,
+                        seasonNumber = 1,
+                        episodeNumber = list.size + 1,
+                        title = ch.name,
+                        duration = "45m",
+                        streamUrl = ch.streamUrl,
+                        thumbnail = ch.logo,
+                        synopsis = ch.currentProgram ?: "Stream episode"
+                    )
+                )
+                if (!seriesMeta.containsKey(seriesTitle)) {
+                    seriesMeta[seriesTitle] = Triple(ch.logo, ch.category, "Streamed series from playlist")
+                }
+            }
+        }
+
+        return seriesMap.map { (title, episodes) ->
+            val meta = seriesMeta[title]
+            val maxSeason = episodes.maxOfOrNull { it.seasonNumber } ?: 1
+            SeriesItem(
+                id = "parsed_ser_${title.hashCode()}",
+                title = title,
+                poster = meta?.first?.ifEmpty { "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=500" } ?: "https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?w=500",
+                category = meta?.second ?: "Series",
+                rating = "95% Match",
+                year = "2024",
+                seasonsCount = maxSeason,
+                description = meta?.third ?: "Full series catalog",
+                episodes = episodes.sortedWith(compareBy({ it.seasonNumber }, { it.episodeNumber }))
+            )
+        }
+    }
+
+    fun getSeriesSeasons(series: SeriesItem): List<Int> {
+        val fromEpisodes = series.episodes.map { it.seasonNumber }.distinct().sorted()
+        return if (fromEpisodes.isNotEmpty()) fromEpisodes else (1..series.seasonsCount.coerceAtLeast(1)).toList()
+    }
+
+    fun getEpisodesForSeason(series: SeriesItem, seasonNumber: Int): List<EpisodeItem> {
+        val filtered = series.episodes.filter { it.seasonNumber == seasonNumber }.sortedBy { it.episodeNumber }
+        return if (filtered.isNotEmpty()) filtered else series.episodes
     }
 
     private fun savePlaylistsToDisk(list: List<PlaylistItem>) {
@@ -511,7 +829,9 @@ class PlaylistRepository(
             obj.put("url", pl.url)
             obj.put("server", pl.server)
             obj.put("username", pl.username)
+            obj.put("password", pl.password)
             obj.put("channelCount", pl.channelCount)
+            obj.put("breakdown", pl.breakdown)
             obj.put("lastUpdated", pl.lastUpdated)
             arr.put(obj)
         }
