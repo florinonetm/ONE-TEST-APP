@@ -36,6 +36,7 @@ fun PlaylistsScreen(
     var showAddM3uDialog by remember { mutableStateOf(false) }
     var showAddXtreamDialog by remember { mutableStateOf(false) }
     var showUaDialog by remember { mutableStateOf(false) }
+    var playlistToDelete by remember { mutableStateOf<PlaylistItem?>(null) }
     var importStatusMessage by remember { mutableStateOf<String?>(null) }
 
     Column(
@@ -245,75 +246,137 @@ fun PlaylistsScreen(
             }
         }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            items(playlists, key = { it.id }) { pl ->
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = OneCardSurface),
-                    shape = RoundedCornerShape(10.dp),
-                    modifier = Modifier.fillMaxWidth()
+        if (playlists.isEmpty()) {
+            Card(
+                colors = CardDefaults.cardColors(containerColor = OneCardSurface),
+                shape = RoundedCornerShape(12.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically
+                    Icon(
+                        Icons.Default.TvOff,
+                        contentDescription = null,
+                        tint = TextGrayDark,
+                        modifier = Modifier.size(48.dp)
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Text(
+                        text = "Nu există nicio listă adăugată",
+                        color = Color.White,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(6.dp))
+                    Text(
+                        text = "Apasă pe 'Add M3U' sau 'Add Xtream' pentru a importa canalele tale IPTV.",
+                        color = TextGray,
+                        fontSize = 12.sp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedButton(
+                        onClick = { repository.resetToShowcaseData() },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White),
+                        shape = RoundedCornerShape(8.dp)
                     ) {
-                        Box(
+                        Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(16.dp), tint = OneRed)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("Încarcă lista demonstrativă ONE", fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                    }
+                }
+            }
+        } else {
+            LazyColumn(
+                modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                items(playlists, key = { it.id }) { pl ->
+                    Card(
+                        colors = CardDefaults.cardColors(containerColor = OneCardSurface),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
                             modifier = Modifier
-                                .background(
-                                    if (pl.type == "XTREAM") OneRed.copy(alpha = 0.2f) else OneBlue.copy(alpha = 0.2f),
-                                    RoundedCornerShape(6.dp)
-                                )
-                                .padding(horizontal = 8.dp, vertical = 6.dp)
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                pl.type,
-                                color = if (pl.type == "XTREAM") OneRed else OneBlue,
-                                fontSize = 11.sp,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(14.dp))
-
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(pl.name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-                            val subtitle = if (pl.type == "XTREAM") pl.server else pl.url
-                            Text(subtitle, color = TextGray, fontSize = 12.sp, maxLines = 1)
-                            if (pl.breakdown.isNotEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .background(
+                                        if (pl.type == "XTREAM") OneRed.copy(alpha = 0.2f) else OneBlue.copy(alpha = 0.2f),
+                                        RoundedCornerShape(6.dp)
+                                    )
+                                    .padding(horizontal = 8.dp, vertical = 6.dp)
+                            ) {
                                 Text(
-                                    "${pl.channelCount} items (${pl.breakdown})",
-                                    color = OneGreen,
+                                    pl.type,
+                                    color = if (pl.type == "XTREAM") OneRed else OneBlue,
                                     fontSize = 11.sp,
-                                    fontWeight = FontWeight.SemiBold
+                                    fontWeight = FontWeight.Bold
                                 )
-                            } else {
-                                Text("${pl.channelCount} Streams Loaded · Updated: ${pl.lastUpdated}", color = TextGrayDark, fontSize = 11.sp)
+                            }
+
+                            Spacer(modifier = Modifier.width(14.dp))
+
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(pl.name, color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                                val subtitle = if (pl.type == "XTREAM") pl.server else pl.url
+                                Text(subtitle, color = TextGray, fontSize = 12.sp, maxLines = 1)
+                                if (pl.breakdown.isNotEmpty()) {
+                                    Text(
+                                        "${pl.channelCount} items (${pl.breakdown})",
+                                        color = OneGreen,
+                                        fontSize = 11.sp,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                } else {
+                                    Text("${pl.channelCount} Streams Loaded · Updated: ${pl.lastUpdated}", color = TextGrayDark, fontSize = 11.sp)
+                                }
+                            }
+
+                            IconButton(
+                                onClick = {
+                                    coroutineScope.launch {
+                                        val res = repository.reloadPlaylist(pl)
+                                        importStatusMessage = res.second
+                                    }
+                                },
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .testTag("reload_playlist_${pl.id}")
+                            ) {
+                                Icon(
+                                    Icons.Default.Refresh,
+                                    contentDescription = "Reload Full Catalog",
+                                    tint = TextGrayLight,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+
+                            Spacer(modifier = Modifier.width(4.dp))
+
+                            IconButton(
+                                onClick = { playlistToDelete = pl },
+                                modifier = Modifier
+                                    .size(36.dp)
+                                    .testTag("delete_playlist_${pl.id}")
+                            ) {
+                                Icon(
+                                    Icons.Default.DeleteOutline,
+                                    contentDescription = "Delete Playlist",
+                                    tint = OneRed,
+                                    modifier = Modifier.size(20.dp)
+                                )
                             }
                         }
-
-                        IconButton(
-                            onClick = {
-                                coroutineScope.launch {
-                                    val res = repository.reloadPlaylist(pl)
-                                    importStatusMessage = res.second
-                                }
-                            },
-                            modifier = Modifier.size(36.dp)
-                        ) {
-                            Icon(
-                                Icons.Default.Refresh,
-                                contentDescription = "Reload Full Catalog",
-                                tint = OneRed,
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Icon(Icons.Default.CheckCircle, contentDescription = "Active", tint = OneGreen, modifier = Modifier.size(20.dp))
                     }
                 }
             }
@@ -506,6 +569,70 @@ fun PlaylistsScreen(
             dismissButton = {
                 TextButton(onClick = { showAddXtreamDialog = false }) {
                     Text("Cancel", color = TextGray)
+                }
+            }
+        )
+    }
+
+    // Delete Playlist Confirmation Dialog
+    playlistToDelete?.let { pl ->
+        AlertDialog(
+            onDismissRequest = { playlistToDelete = null },
+            title = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Default.Delete,
+                        contentDescription = null,
+                        tint = OneRed,
+                        modifier = Modifier.size(22.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "Șterge lista",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            },
+            containerColor = OneDarkSurface,
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(
+                        text = "Ești sigur că vrei să elimini lista \"${pl.name}\"?",
+                        color = Color.White,
+                        fontSize = 14.sp
+                    )
+                    Text(
+                        text = "Toate canalele TV, filmele și serialele asociate (${pl.channelCount} elemente) vor fi șterse din aplicație.",
+                        color = TextGray,
+                        fontSize = 12.sp
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val deletedName = pl.name
+                        val targetId = pl.id
+                        playlistToDelete = null
+                        coroutineScope.launch {
+                            repository.deletePlaylist(targetId)
+                            importStatusMessage = "Lista \"$deletedName\" a fost ștearsă cu succes."
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = OneRed),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier.testTag("confirm_delete_button")
+                ) {
+                    Text("Șterge", color = Color.White, fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { playlistToDelete = null },
+                    modifier = Modifier.testTag("cancel_delete_button")
+                ) {
+                    Text("Anulează", color = TextGray)
                 }
             }
         )

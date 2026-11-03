@@ -719,6 +719,49 @@ class PlaylistRepository(
         }
     }
 
+    suspend fun deletePlaylist(playlistId: String): Boolean = withContext(Dispatchers.IO) {
+        val remaining = _playlists.value.filter { it.id != playlistId }
+        _playlists.value = remaining
+        savePlaylistsToDisk(remaining)
+
+        if (remaining.isEmpty()) {
+            _channels.value = emptyList()
+            _vodItems.value = emptyList()
+            _seriesItems.value = emptyList()
+        } else {
+            val nextCustom = remaining.firstOrNull { it.id != "pl_default" }
+            if (nextCustom != null) {
+                reloadPlaylist(nextCustom)
+            } else {
+                seedShowcaseData()
+            }
+        }
+        true
+    }
+
+    fun deletePlaylistSync(playlistId: String) {
+        val remaining = _playlists.value.filter { it.id != playlistId }
+        _playlists.value = remaining
+        savePlaylistsToDisk(remaining)
+
+        if (remaining.isEmpty()) {
+            _channels.value = emptyList()
+            _vodItems.value = emptyList()
+            _seriesItems.value = emptyList()
+        } else {
+            val nextCustom = remaining.firstOrNull { it.id != "pl_default" }
+            if (nextCustom == null) {
+                seedShowcaseData()
+            }
+        }
+    }
+
+    fun resetToShowcaseData() {
+        prefs.edit().remove("playlists_json").apply()
+        _playlists.value = emptyList()
+        seedShowcaseData()
+    }
+
     private fun extractVodFromChannels(channels: List<Channel>): List<VodItem> {
         val vodChannels = channels.filter { it.kind == StreamKind.VOD }
         if (vodChannels.isEmpty()) return emptyList()
